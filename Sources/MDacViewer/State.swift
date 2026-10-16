@@ -7,6 +7,8 @@ import UniformTypeIdentifiers
 final class AppState: ObservableObject {
     static let shared = AppState()
 
+    private static let darkModeKey = "darkMode"
+
     @Published var darkMode = false
     @Published var syncScroll = false
     @Published var windowTitle = "MDacViewer"
@@ -18,14 +20,26 @@ final class AppState: ObservableObject {
     /// Text queued while the web layer has not finished booting (e.g. file opened via Finder at launch).
     var pendingInitialText: String?
 
-    private init() {}
+    private init() {
+        darkMode = UserDefaults.standard.bool(forKey: Self.darkModeKey)
+        applyAppearance()
+    }
 
     // MARK: - Settings
 
-    /// Push the current toggle states into the web layer (idempotent).
+    /// Push the current toggle states into the web layer (idempotent) and
+    /// apply the app-wide appearance so the window chrome matches too.
     func pushSettingsToWeb() {
         web?.setTheme(dark: darkMode)
         web?.setSyncScroll(enabled: syncScroll)
+        UserDefaults.standard.set(darkMode, forKey: Self.darkModeKey)
+        applyAppearance()
+    }
+
+    /// Switches the entire app — title bar, toolbar, menus and panes — between
+    /// light and dark, following the in-app Dark mode toggle.
+    func applyAppearance() {
+        NSApplication.shared.appearance = NSAppearance(named: darkMode ? .darkAqua : .aqua)
     }
 
     /// Called by the web layer once it has booted, reporting its persisted settings.

@@ -15,7 +15,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 - **Live preview** — renders as you type; no file or save needed
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text
 - **Sync scroll** — the editor and preview scroll together (toggleable)
-- **Dark mode** — light and dark themes for both panes (toggleable)
+- **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation
 - **Copy** — copies the full Markdown source to the clipboard
 - **Session memory** — your last text and settings come back when you reopen the app
