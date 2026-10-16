@@ -1,0 +1,89 @@
+/* MDacViewer — layout and theme styles for the editor/preview panes. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+html[data-theme="light"] body { background: #ffffff; }
+html[data-theme="dark"] body { background: #22272e; }
+
+#split {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+#editor-pane {
+  position: relative;
+  flex: 1 1 50%;
+  min-width: 220px;
+  overflow: hidden;
+  background: #ffffff;
+}
+html[data-theme="dark"] #editor-pane { background: #1e1e1e; }
+
+#editor {
+  position: absolute;
+  inset: 0;
+}
+
+#divider {
+  flex: 0 0 6px;
+  cursor: col-resize;
+  background: #d0d7de;
+}
+html[data-theme="dark"] #divider { background: #373e47; }
+
+body.resizing, body.resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+#preview-pane {
+  flex: 1 1 50%;
+  min-width: 220px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+html[data-theme="light"] #preview-pane { background: #ffffff; }
+html[data-theme="dark"] #preview-pane { background: #22272e; }
+
+#output {
+  padding: 28px 36px 80px;
+  min-height: 100%;
+}
+
+/* Mermaid diagrams: centre them and keep them inside the pane. */
+.mermaid {
+  text-align: center;
+  margin: 16px 0;
+}
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* Fallback plain-text editor (used only if Monaco cannot load). */
+.fallback-editor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: "SF Mono", Menlo, Monaco, monospace;
+  font-size: 13px;
+  line-height: 20px;
+  tab-size: 4;
+  background: #ffffff;
+  color: #24292f;
+}
+html.dark-editor .fallback-editor {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}

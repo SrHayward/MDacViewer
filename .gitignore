@@ -1,0 +1,18 @@
+# Build outputs (never upload these)
+build/
+dist/
+.build/
+.swiftpm/
+DerivedData/
+
+# Packaged app and installers
+*.app
+*.dmg
+
+# macOS junk files
+.DS_Store
+.AppleDouble
+._*
+
+# Xcode user settings (if the project is ever opened in Xcode)
+xcuserdata/

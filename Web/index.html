@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MDacViewer</title>
+  <link id="gh-markdown-css" rel="stylesheet" href="vendor/github-markdown-light.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="split">
+    <div id="editor-pane">
+      <div id="editor"></div>
+    </div>
+    <div id="divider"></div>
+    <div id="preview-pane">
+      <div id="output" class="markdown-body"></div>
+    </div>
+  </div>
+
+  <script src="vendor/marked.min.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script src="vendor/mermaid.min.js"></script>
+  <script src="vendor/monaco/min/vs/loader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
