@@ -64,10 +64,14 @@
       mermaid.run({
         nodes: Array.prototype.slice.call(diagrams),
         suppressErrors: true,
+      }).then(function () {
+        refreshPreviewMetrics();
       }).catch(function (err) {
         console.warn('mermaid render failed:', err);
       });
     }
+
+    refreshPreviewMetrics();
   }
 
   function scheduleRender() {
@@ -97,24 +101,42 @@
     }
   }
 
-  function syncFromEditor() {
-    var now = Date.now();
-    if (now < state.guardUntil) { return; }
-    var ratio = state.adapter.scrollRatio();
-    var max = previewPane.scrollHeight - previewPane.clientHeight;
-    var target = ratio * Math.max(0, max);
-    if (Math.abs(target - previewPane.scrollTop) < 1) { return; }
-    state.guardUntil = now + 80;
-    previewPane.scrollTop = target;
+  // Cached scroll metrics. Reading scrollHeight forces a layout pass, so we
+  // refresh these only when content/size actually changes — never inside the
+  // scroll handler itself (that caused the preview to stutter during sync).
+  var previewMax = 0;
+  function refreshPreviewMetrics() {
+    previewMax = Math.max(0, previewPane.scrollHeight - previewPane.clientHeight);
   }
 
-  function syncFromPreview() {
-    var now = Date.now();
-    if (now < state.guardUntil) { return; }
-    var max = previewPane.scrollHeight - previewPane.clientHeight;
-    var ratio = max > 0 ? previewPane.scrollTop / max : 0;
-    state.guardUntil = now + 80;
-    state.adapter.setScrollRatio(ratio);
+  // Scroll syncing is batched to one update per display frame.
+  var syncFrame = null;
+  var syncSource = null;
+
+  function scheduleSync(source) {
+    syncSource = source;
+    if (syncFrame !== null) { return; }
+    syncFrame = requestAnimationFrame(function () {
+      syncFrame = null;
+      var source = syncSource;
+      syncSource = null;
+      if (!state.sync || !state.adapter) { return; }
+
+      var now = Date.now();
+      if (now < state.guardUntil) { return; }
+
+      if (source === 'editor') {
+        var ratio = state.adapter.scrollRatio();
+        var target = ratio * previewMax;
+        if (Math.abs(target - previewPane.scrollTop) < 1) { return; }
+        state.guardUntil = now + 70;
+        previewPane.scrollTop = target;
+      } else if (source === 'preview') {
+        var previewRatio = previewMax > 0 ? previewPane.scrollTop / previewMax : 0;
+        state.guardUntil = now + 70;
+        state.adapter.setScrollRatio(previewRatio);
+      }
+    });
   }
 
   /* ------------------------------ editor adapters ------------------------------ */
@@ -219,6 +241,7 @@
       dragging = false;
       document.body.classList.remove('resizing');
       if (state.adapter) { state.adapter.layout(); }
+      refreshPreviewMetrics();
     });
   }
 
@@ -261,15 +284,19 @@
       scheduleSave();
     });
     adapter.onScroll(function () {
-      if (state.sync) { syncFromEditor(); }
+      if (state.sync) { scheduleSync('editor'); }
     });
     previewPane.addEventListener('scroll', function () {
-      if (state.sync) { syncFromPreview(); }
+      if (state.sync) { scheduleSync('preview'); }
     });
-    window.addEventListener('resize', function () { adapter.layout(); });
+    window.addEventListener('resize', function () {
+      adapter.layout();
+      refreshPreviewMetrics();
+    });
 
     initDivider();
     scheduleRender();
+    refreshPreviewMetrics();
 
     post({ type: 'ready', dark: state.dark, sync: state.sync });
   }

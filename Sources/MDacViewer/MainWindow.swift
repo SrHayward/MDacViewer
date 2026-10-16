@@ -32,19 +32,21 @@ struct MainWindow: View {
                 }
 
                 ToolbarItemGroup {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Text("Sync scroll")
                         Toggle("Sync scroll", isOn: $app.syncScroll)
                             .labelsHidden()
                             .toggleStyle(.switch)
+                            .controlSize(.small)
                     }
                     .help("Keep the editor and preview scrolled together")
 
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Text("Dark mode")
                         Toggle("Dark mode", isOn: $app.darkMode)
                             .labelsHidden()
                             .toggleStyle(.switch)
+                            .controlSize(.small)
                     }
                     .help("Switch between light and dark appearance")
 

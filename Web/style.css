@@ -50,6 +50,7 @@ body.resizing, body.resizing * {
   min-width: 220px;
   overflow-y: auto;
   overflow-x: hidden;
+  overflow-anchor: none;
 }
 html[data-theme="light"] #preview-pane { background: #ffffff; }
 html[data-theme="dark"] #preview-pane { background: #22272e; }
