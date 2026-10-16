@@ -31,30 +31,33 @@ struct MainWindow: View {
                     .help("Clear the editor")
                 }
 
-                ToolbarItemGroup {
-                    HStack(spacing: 6) {
-                        Text("Sync scroll")
-                        Toggle("Sync scroll", isOn: $app.syncScroll)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                    }
-                    .help("Keep the editor and preview scrolled together")
+                ToolbarItem(placement: .primaryAction) {
+                    HStack(spacing: 24) {
+                        HStack(spacing: 8) {
+                            Text("Sync scroll")
+                            Toggle("Sync scroll", isOn: $app.syncScroll)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                        }
+                        .help("Keep the editor and preview scrolled together")
 
-                    HStack(spacing: 6) {
-                        Text("Dark mode")
-                        Toggle("Dark mode", isOn: $app.darkMode)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                            .controlSize(.small)
-                    }
-                    .help("Switch between light and dark appearance")
+                        HStack(spacing: 8) {
+                            Text("Dark mode")
+                            Toggle("Dark mode", isOn: $app.darkMode)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                                .controlSize(.small)
+                        }
+                        .help("Switch between light and dark appearance")
 
-                    Button { app.openRepo() } label: {
-                        Image(nsImage: Self.githubMark)
-                            .renderingMode(.template)
+                        Button { app.openRepo() } label: {
+                            Image(nsImage: Self.githubMark)
+                                .renderingMode(.template)
+                        }
+                        .help("View source on GitHub")
                     }
-                    .help("View source on GitHub")
+                    .padding(.horizontal, 10)
                 }
             }
             .onReceive(app.$darkMode.dropFirst()) { _ in app.pushSettingsToWeb() }
