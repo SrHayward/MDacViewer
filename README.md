@@ -10,6 +10,10 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ![MDacViewer screenshot](docs/screenshot.png)
 
+*Dark mode — which switches the entire app, window chrome included:*
+
+![MDacViewer in dark mode](docs/screenshot-dark.png)
+
 ## Features
 
 - **Live preview** — renders as you type; no file or save needed
