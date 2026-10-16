@@ -5,46 +5,47 @@ struct MainWindow: View {
 
     var body: some View {
         EditorWebView()
-            .frame(minWidth: 820, minHeight: 520)
+            .frame(minWidth: 880, minHeight: 540)
+            .background(WindowFrameSaver())
             .navigationTitle(app.windowTitle)
             .toolbar {
                 ToolbarItemGroup(placement: .navigation) {
                     Button { app.openDocument() } label: {
                         Label("Open", systemImage: "folder")
-                            .labelStyle(.titleAndIcon)
                     }
                     .help("Open a Markdown file (⌘O)")
 
                     Button { app.saveDocument() } label: {
                         Label("Save", systemImage: "square.and.arrow.down")
-                            .labelStyle(.titleAndIcon)
                     }
                     .help("Save (⌘S) — saves to the opened file, or asks where to save")
 
                     Button { app.copyAll() } label: {
                         Label("Copy", systemImage: "doc.on.doc")
-                            .labelStyle(.titleAndIcon)
                     }
                     .help("Copy the full Markdown source (⇧⌘C)")
 
                     Button { app.requestReset() } label: {
                         Label("Reset", systemImage: "arrow.counterclockwise")
-                            .labelStyle(.titleAndIcon)
                     }
                     .help("Clear the editor")
                 }
 
                 ToolbarItemGroup {
-                    Toggle(isOn: $app.syncScroll) {
+                    HStack(spacing: 8) {
                         Text("Sync scroll")
+                        Toggle("Sync scroll", isOn: $app.syncScroll)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
                     }
-                    .toggleStyle(.checkbox)
                     .help("Keep the editor and preview scrolled together")
 
-                    Toggle(isOn: $app.darkMode) {
+                    HStack(spacing: 8) {
                         Text("Dark mode")
+                        Toggle("Dark mode", isOn: $app.darkMode)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
                     }
-                    .toggleStyle(.checkbox)
                     .help("Switch between light and dark appearance")
 
                     Button { app.openRepo() } label: {
