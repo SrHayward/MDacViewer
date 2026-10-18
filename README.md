@@ -32,7 +32,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ## Download & install
 
-1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.0.dmg` (or newer).
+1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.1.dmg` (or newer).
 2. Open the DMG and drag **MDacViewer** into your **Applications** folder.
 3. Launch it from Applications or Spotlight.
 
@@ -65,7 +65,7 @@ After that it launches like any other app.
 
 MDacViewer is offline-first. It bundles everything it needs (see credits below) — no fonts, no analytics, no telemetry, and your text never leaves your Mac.
 
-There is exactly one automatic network request: about once a day the app asks GitHub's public API (`api.github.com`) for the newest MDacViewer release, so it can show a subtle "update available" icon in the toolbar. The request is anonymous — no identifiers, no usage data — and the result is stored locally. The About window also has a **Check for Updates** button if you want to check on demand. Nothing is ever downloaded or installed automatically.
+There is exactly one automatic network request: about once a day the app asks GitHub's public API (`api.github.com`) for the newest MDacViewer release, so it can show a subtle “update available” icon in the toolbar. The request carries nothing about you — just the app's name and version — and the result is stored locally. The About window also has a **Check for Updates** button if you want to check on demand. Nothing is ever downloaded or installed automatically.
 
 Everything else that opens a network connection is when **you** click a link in your Markdown (it opens in your default browser) or one of the GitHub buttons.
 
@@ -77,7 +77,7 @@ Requirements: an Apple Silicon Mac with either Xcode **or** just the Command Lin
 git clone https://github.com/SrHayward/MDacViewer.git
 cd MDacViewer
 make run      # builds MDacViewer.app and launches it
-make dmg      # creates dist/MDacViewer-1.0.0.dmg (drag-to-install)
+make dmg      # creates dist/MDacViewer-1.0.1.dmg (drag-to-install)
 ```
 
 | Command | What it does |
@@ -88,11 +88,10 @@ make dmg      # creates dist/MDacViewer-1.0.0.dmg (drag-to-install)
 | `make vendor` | (Re-)download the pinned rendering libraries into `Web/vendor/` |
 | `make icon` | Regenerate the app icon |
 | `make clean` | Delete all build output |
-| `./Scripts/test-update-check.sh` | End-to-end test of the update check (builds the app, serves a fake feed, verifies the result) |
 
 The rendering libraries in `Web/vendor/` are pinned and committed, so a fresh clone builds offline with no downloads.
 
-**Project layout:** `Sources/MDacViewer/` (native SwiftUI shell) · `Web/` (editor + preview engine) · `Scripts/` (build, DMG and icon tooling) · `.github/workflows/release.yml` (automated releases).
+**Project layout:** `Sources/MDacViewer/` (native SwiftUI shell) · `Web/` (editor + preview engine) · `Scripts/` (build, DMG, icon and test tooling) · `.github/workflows/release.yml` (automated releases).
 
 ## Releases & versioning
 
