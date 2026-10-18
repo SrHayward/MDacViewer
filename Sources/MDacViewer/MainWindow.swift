@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainWindow: View {
     @EnvironmentObject var app: AppState
+    @ObservedObject private var updates = UpdateChecker.shared
 
     var body: some View {
         EditorWebView()
@@ -51,6 +52,15 @@ struct MainWindow: View {
                         }
                         .help("Switch between light and dark appearance")
 
+                        if updates.updateAvailable {
+                            Button { updates.openReleasesPage() } label: {
+                                Image(systemName: "arrow.down.circle")
+                            }
+                            .help("Update available")
+                            .accessibilityLabel("Update available")
+                            .transition(.opacity)
+                        }
+
                         Button { app.openRepo() } label: {
                             Image(nsImage: Self.githubMark)
                                 .renderingMode(.template)
@@ -58,6 +68,7 @@ struct MainWindow: View {
                         .help("View source on GitHub")
                     }
                     .padding(.horizontal, 10)
+                    .animation(.easeInOut(duration: 0.25), value: updates.updateAvailable)
                 }
             }
             .onReceive(app.$darkMode.dropFirst()) { _ in app.pushSettingsToWeb() }
