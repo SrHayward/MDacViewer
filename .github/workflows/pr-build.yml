@@ -1,0 +1,59 @@
+name: PR Build
+
+# Compile check for every pull request.
+#
+# Why this exists: the only other workflow (release.yml) fires on a `v*` tag or a
+# manual dispatch, so a broken branch was previously only discovered at release
+# time. This runs the same build on a GitHub-hosted Apple Silicon Mac for every
+# PR and push to main, so a review can see whether the change actually compiles.
+#
+# It builds the app and runs the repo's own test tooling. It does NOT build the
+# DMG and does NOT publish anything — releases stay with release.yml.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toolchain versions
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Build app
+        run: VERSION=0.0.0-ci ./Scripts/build-app.sh
+
+      - name: Verify the bundle was produced
+        run: |
+          test -x build/MDacViewer.app/Contents/MacOS/MDacViewer \
+            || { echo "::error::build/MDacViewer.app/Contents/MacOS/MDacViewer is missing"; exit 1; }
+          du -sh build/MDacViewer.app
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+            build/MDacViewer.app/Contents/Info.plist
+
+      # The update-check harness is an end-to-end script that launches a GUI app
+      # and waits ~20 s for a network round-trip. There is no GUI session on a CI
+      # runner, so it is not wired in here — it stays a local tool (make it and
+      # run it on your own Mac). See Scripts/test-update-check.sh.
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/
+          if-no-files-found: ignore
