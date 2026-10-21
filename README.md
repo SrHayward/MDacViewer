@@ -33,7 +33,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ## Download & install
 
-1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.2.dmg` (or newer).
+1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.3.dmg` (or newer).
 2. Open the DMG and drag **MDacViewer** into your **Applications** folder.
 3. Launch it from Applications or Spotlight.
 
