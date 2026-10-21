@@ -138,6 +138,8 @@ final class AppState: ObservableObject {
     }
 
     func performReset() {
+        // The editor text is not persisted anywhere, so resetting simply means
+        // forgetting the current file and asking the web layer to empty the editor.
         currentFileURL = nil
         windowTitle = "MDacViewer"
         web?.reset()
