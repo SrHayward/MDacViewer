@@ -12,9 +12,9 @@
 (function () {
   'use strict';
 
-  var STORE_TEXT = 'mdac.content';
   var STORE_DARK = 'mdac.dark';
   var STORE_SYNC = 'mdac.sync';
+  var STORE_GUIDE = 'mdac.guide';
 
   var bridge = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge) || null;
   function post(message) { if (bridge) { bridge.postMessage(message); } }
@@ -33,7 +33,6 @@
   };
 
   var renderTimer = null;
-  var saveTimer = null;
 
   /* ------------------------------ rendering ------------------------------ */
 
@@ -77,16 +76,6 @@
   function scheduleRender() {
     clearTimeout(renderTimer);
     renderTimer = setTimeout(render, 150);
-  }
-
-  // Remember the editor content between launches (same idea as the website).
-  function scheduleSave() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () {
-      try {
-        localStorage.setItem(STORE_TEXT, state.adapter.getValue());
-      } catch (e) { /* storage full — ignore */ }
-    }, 400);
   }
 
   /* ------------------------------ theme / sync scroll ------------------------------ */
@@ -265,23 +254,21 @@
 
     applyTheme(state.dark);
 
-    var stored = localStorage.getItem(STORE_TEXT);
-    if (stored !== null) {
-      adapter.setValue(stored);
-    } else {
-      // First ever launch: show the syntax guide.
+    // The editor always starts empty — we deliberately do not restore any
+    // previously typed text. The only exception is the very first launch,
+    // which shows the syntax guide as a one-off onboarding touch.
+    if (localStorage.getItem(STORE_GUIDE) === null) {
+      try { localStorage.setItem(STORE_GUIDE, 'true'); } catch (e) {}
       loadSample(function (text) {
         if (text && adapter.getValue() === '') {
           adapter.setValue(text);
         }
         scheduleRender();
-        scheduleSave();
       });
     }
 
     adapter.onChange(function () {
       scheduleRender();
-      scheduleSave();
     });
     adapter.onScroll(function () {
       if (state.sync) { scheduleSync('editor'); }
@@ -307,7 +294,6 @@
     setText: function (text) {
       state.adapter.setValue(text);
       scheduleRender();
-      scheduleSave();
     },
     getText: function () {
       return state.adapter.getValue();
@@ -325,9 +311,7 @@
     },
     resetEditor: function () {
       state.adapter.setValue('');
-      try { localStorage.removeItem(STORE_TEXT); } catch (e) {}
       scheduleRender();
-      scheduleSave();
     },
   };
 

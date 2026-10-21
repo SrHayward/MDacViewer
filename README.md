@@ -22,7 +22,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation
 - **Copy** — copies the full Markdown source to the clipboard
-- **Session memory** — your last text and settings come back when you reopen the app
+- **Settings memory** — your dark-mode and sync-scroll settings come back when you reopen the app
 - **GitHub-flavoured Markdown** — tables, strikethrough, nested lists, blockquotes and more
 - **Mermaid diagrams** — <code>```mermaid</code> blocks render as live diagrams
 - **Open from Finder** — double-click a `.md` file (or drag it onto the app) to open it
