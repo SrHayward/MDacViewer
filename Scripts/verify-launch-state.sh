@@ -17,6 +17,7 @@
 # must be eyeballed (see REPRODUCE.md, steps 7-8).
 #
 # Usage:  ./Scripts/verify-launch-state.sh
+# Always rebuilds the app from this checkout before testing it.
 # Exits 0 on pass, 1 on failure. Safe to re-run; cleans up its temp file.
 
 set -uo pipefail
@@ -24,8 +25,10 @@ cd "$(dirname "$0")/.."
 
 BUNDLE_ID="com.srhayward.mdacviewer"
 APP="build/MDacViewer.app"
+APP_ABS="$(pwd)/$APP"
 TOKEN="MDACVIEWER_SENTINEL_$$_$(date +%s)"
 SENTINEL_FILE="$(mktemp -d)/sentinel-$$.md"
+BUILD_LOG=""
 FAILURES=0
 
 say()  { printf '%s\n' "$*"; }
@@ -36,6 +39,7 @@ info() { printf '  · %s\n' "$*"; }
 cleanup() {
   pkill -x MDacViewer 2>/dev/null || true
   rm -rf "$(dirname "$SENTINEL_FILE")"
+  [ -n "$BUILD_LOG" ] && rm -f "$BUILD_LOG"
 }
 trap cleanup EXIT
 
@@ -64,19 +68,26 @@ say "MDacViewer — launch-state verification"
 say "bundle id: $BUNDLE_ID"
 say
 
-# --- 0. build if needed ------------------------------------------------------
-if [ ! -x "$APP/Contents/MacOS/MDacViewer" ]; then
-  say "→ No build found; building (VERSION=0.0.0-verify)…"
-  VERSION=0.0.0-verify make app >/dev/null || { bad "build failed"; exit 1; }
+# --- 0. build from the current checkout --------------------------------------
+# Always rebuild: a pre-existing bundle may be stale (e.g. built from another
+# branch), and testing it would silently verify the wrong code.
+say "→ Building from the current checkout (VERSION=0.0.0-verify)…"
+BUILD_LOG="$(mktemp -t mdacviewer-build)"
+if ! VERSION=0.0.0-verify make app >"$BUILD_LOG" 2>&1; then
+  bad "build failed — build output follows"
+  sed 's/^/      /' "$BUILD_LOG"
+  exit 1
 fi
-ok "app bundle present"
+rm -f "$BUILD_LOG"
+BUILD_LOG=""
+ok "app bundle built"
 
 # --- 1. fresh launch writes the guide flag (proves the new code is running) --
 pkill -x MDacViewer 2>/dev/null || true
 sleep 1
 say
 say "→ Launch 1: plain launch, no file (new boot() should write mdac.guide)"
-open "$APP"
+open "$APP_ABS"
 sleep 6
 pkill -x MDacViewer 2>/dev/null || true
 sleep 2
@@ -101,23 +112,49 @@ say
 say "→ Launch 2: open a file containing a unique sentinel, then quit"
 printf '# Sentinel\n\n%s\n' "$TOKEN" > "$SENTINEL_FILE"
 info "sentinel: $TOKEN"
-open -a "$APP" "$SENTINEL_FILE"
+if ! open -a "$APP_ABS" "$SENTINEL_FILE"; then
+  bad "could not open the sentinel file with the app (open -a failed)"
+fi
 sleep 6
+
+# Make sure the file really is the open document — otherwise the storage check
+# below would pass vacuously because nothing was ever opened.
+OPEN_CONFIRMED=0
+if pgrep -x MDacViewer >/dev/null; then
+  TITLE2="$(osascript -e 'tell application "System Events" to tell process "MDacViewer" to get value of attribute "AXTitle" of window 1' 2>/dev/null || true)"
+  case "$TITLE2" in
+    "")
+      info "window title unreadable (Accessibility not granted) — cannot confirm the file opened"
+      OPEN_CONFIRMED=1
+      ;;
+    *"$(basename "$SENTINEL_FILE")"*)
+      info "file confirmed open in window (\"$TITLE2\")"
+      OPEN_CONFIRMED=1
+      ;;
+    *)
+      bad "the sentinel file was not opened (window title: \"$TITLE2\")"
+      ;;
+  esac
+else
+  bad "the app is not running after launch 2 — the sentinel file was never opened"
+fi
 pkill -x MDacViewer 2>/dev/null || true
 sleep 2
 
-HIT="$(storage_contains "$TOKEN" || true)"
-if [ -n "$HIT" ]; then
-  bad "the file's text WAS persisted — the buffer is still being written"
-  info "found in: $HIT"
-else
-  ok "the opened file's text was not persisted — buffer persistence is gone"
+if [ "$OPEN_CONFIRMED" = 1 ]; then
+  HIT="$(storage_contains "$TOKEN" || true)"
+  if [ -n "$HIT" ]; then
+    bad "the file's text WAS persisted — the buffer is still being written"
+    info "found in: $HIT"
+  else
+    ok "the opened file's text was not persisted — buffer persistence is gone"
+  fi
 fi
 
 # --- 3. best-effort window title check --------------------------------------
 say
 say "→ Launch 3: window title with no file open (needs Accessibility permission)"
-open "$APP"
+open "$APP_ABS"
 sleep 6
 TITLE="$(osascript -e 'tell application "System Events" to tell process "MDacViewer" to get value of attribute "AXTitle" of window 1' 2>/dev/null || true)"
 pkill -x MDacViewer 2>/dev/null || true
