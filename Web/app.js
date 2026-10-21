@@ -34,6 +34,17 @@
 
   var renderTimer = null;
 
+  // Programmatic loads (opening a file, resetting, the first-run sample) must
+  // not mark the document dirty: Monaco fires its change event synchronously
+  // from setValue, so the flag is toggled around the call.
+  var suppressDirty = false;
+
+  function setEditorText(text) {
+    suppressDirty = true;
+    state.adapter.setValue(text);
+    suppressDirty = false;
+  }
+
   /* ------------------------------ rendering ------------------------------ */
 
   marked.setOptions({ gfm: true });
@@ -261,13 +272,14 @@
       try { localStorage.setItem(STORE_GUIDE, 'true'); } catch (e) {}
       loadSample(function (text) {
         if (text && adapter.getValue() === '') {
-          adapter.setValue(text);
+          setEditorText(text);
         }
         scheduleRender();
       });
     }
 
     adapter.onChange(function () {
+      if (!suppressDirty) { post({ type: 'dirty', dirty: true }); }
       scheduleRender();
     });
     adapter.onScroll(function () {
@@ -292,7 +304,7 @@
 
   window.mdac = {
     setText: function (text) {
-      state.adapter.setValue(text);
+      setEditorText(text);
       scheduleRender();
     },
     getText: function () {
@@ -310,7 +322,7 @@
       try { localStorage.setItem(STORE_SYNC, String(enabled)); } catch (e) {}
     },
     resetEditor: function () {
-      state.adapter.setValue('');
+      setEditorText('');
       scheduleRender();
     },
   };

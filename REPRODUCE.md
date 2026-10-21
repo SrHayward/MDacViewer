@@ -51,3 +51,41 @@ remembered between launches; only the editor text is not.
 
 Running these steps requires a Mac with Xcode or the Command Line Tools; use
 `make run` as described in the "Build from source" section of `README.md`.
+
+## Feature: unsaved-changes indicator + save nudge
+
+### What it does
+
+While a file is open, any edit puts an asterisk in the window title —
+`MDacViewer — notes.md *` — and saving removes it. With no file open the title stays
+exactly as before, and untitled text never gets an asterisk.
+
+If the window is closed (red button) or the app is quit (⌘Q) while an open file has
+unsaved edits, the standard three-button alert appears: **Save** (default),
+**Cancel**, and **Don't Save** (destructive). Save writes to the open file and then
+closes; Cancel leaves everything as it was; Don't Save closes and discards the edit.
+
+Notes:
+
+- ⌘W is not wired to anything in this app (there is no Close menu item), so the red
+  button is the window-close path; ⌘Q is the quit path. Both show the same alert.
+- Save As, Open and Reset all clear the flag.
+- Untitled pasted text never prompts — only an open file can lose its link.
+- Implementation note: SwiftUI owns the main window's `NSWindowDelegate` and relies
+  on it (replacing the delegate makes the window close itself on the next scene
+  update, e.g. when a file is opened), so the red button's action is intercepted
+  instead, and quitting is handled by `applicationShouldTerminate`.
+
+### How to verify this manually on a Mac
+
+1. Open a Markdown file and edit it. The title becomes `MDacViewer — <filename> *`.
+2. Press ⌘S. No save panel appears, the file on disk is updated, and the asterisk
+   disappears.
+3. Edit again, then click the red close button (or press ⌘Q). The Save / Cancel /
+   Don't Save alert appears.
+4. Choose Cancel. The window stays open and the asterisk is still there.
+5. Close again and choose Don't Save. The app quits and the file on disk is unchanged
+   from the last save.
+6. Edit once more, press ⌘Q, and choose Save. The app writes the file and then quits.
+7. With no file open, paste some text: the title stays exactly `MDacViewer` and
+   closing the window does not prompt.

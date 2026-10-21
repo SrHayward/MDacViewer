@@ -65,4 +65,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }
+
+    // ⌘Q with unsaved changes in an open file: show the same Save / Cancel /
+    // Don't Save nudge as closing the window, and only then allow termination.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let app = AppState.shared
+        if app.closeApproved || !app.isDirty {
+            return .terminateNow
+        }
+        let window = sender.mainWindow ?? sender.windows.first
+        app.confirmClose(window: window) { proceed in
+            // Reply on the next run loop turn, never inside this call.
+            DispatchQueue.main.async {
+                NSApp.reply(toApplicationShouldTerminate: proceed)
+            }
+        }
+        return .terminateLater
+    }
 }

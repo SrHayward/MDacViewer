@@ -14,6 +14,18 @@ final class AppState: ObservableObject {
     @Published var windowTitle = "MDacViewer"
     @Published var showResetConfirm = false
 
+    /// True while the open file has edits that have not been saved.
+    /// Only tracked for files: untitled text never shows the asterisk or the
+    /// close nudge, because only a file link can be lost.
+    @Published private(set) var isDirty = false {
+        didSet { if isDirty != oldValue { refreshWindowTitle() } }
+    }
+
+    /// Set once the user has approved closing (Save or Don't Save), so the
+    /// window-close and app-quit paths do not ask a second time.
+    private(set) var closeApproved = false
+    private var isNudging = false
+
     weak var web: WebController?
 
     private(set) var currentFileURL: URL?
@@ -70,7 +82,8 @@ final class AppState: ObservableObject {
         do {
             let text = try Self.readText(at: url)
             currentFileURL = url
-            windowTitle = "MDacViewer — \(url.lastPathComponent)"
+            isDirty = false
+            refreshWindowTitle()
             if let web {
                 web.setText(text)
             } else {
@@ -81,16 +94,37 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Called by the web layer whenever the editor text changes.
+    func markDirty() {
+        guard currentFileURL != nil else { return }
+        if !isDirty { isDirty = true }
+    }
+
+    /// The single place the window title is assembled.
+    private func refreshWindowTitle() {
+        let base = currentFileURL.map { "MDacViewer — \($0.lastPathComponent)" } ?? "MDacViewer"
+        windowTitle = isDirty ? base + " *" : base
+    }
+
     // MARK: - Save
 
     func saveDocument() {
-        guard let web else { return }
+        saveDocument(completion: nil)
+    }
+
+    /// Saves the editor text: straight back to the open file, or through the
+    /// Save panel when there is no file yet. The completion reports whether
+    /// the save actually happened (false when cancelled or failed).
+    func saveDocument(completion: ((Bool) -> Void)?) {
+        guard let web else { completion?(false); return }
         web.getText { [weak self] text in
-            guard let self else { return }
+            guard let self else { completion?(false); return }
             if let url = self.currentFileURL {
-                self.write(text, to: url)
+                let saved = self.write(text, to: url)
+                if saved { self.isDirty = false }
+                completion?(saved)
             } else {
-                self.saveDocumentAs(with: text)
+                self.saveDocumentAs(with: text, completion: completion)
             }
         }
     }
@@ -102,23 +136,91 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func saveDocumentAs(with text: String) {
+    private func saveDocumentAs(with text: String, completion: ((Bool) -> Void)? = nil) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = Self.markdownTypes
         panel.nameFieldStringValue = currentFileURL?.lastPathComponent ?? "Untitled.md"
         panel.begin { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            self?.write(text, to: url)
-            self?.currentFileURL = url
-            self?.windowTitle = "MDacViewer — \(url.lastPathComponent)"
+            guard response == .OK, let url = panel.url else {
+                completion?(false)
+                return
+            }
+            guard let self else { completion?(false); return }
+            let saved = self.write(text, to: url)
+            if saved {
+                self.currentFileURL = url
+                self.isDirty = false
+                self.refreshWindowTitle()
+            }
+            completion?(saved)
         }
     }
 
-    private func write(_ text: String, to url: URL) {
+    @discardableResult
+    private func write(_ text: String, to url: URL) -> Bool {
         do {
             try text.write(to: url, atomically: true, encoding: .utf8)
+            return true
         } catch {
             Self.presentError("Could not save “\(url.lastPathComponent)”", error)
+            return false
+        }
+    }
+
+    // MARK: - Unsaved-changes nudge
+
+    /// Shows the standard Save / Cancel / Don't Save alert for an open file
+    /// with unsaved edits. `completion(true)` means it is safe to close or
+    /// quit (saved, or explicitly discarded); `false` means the user cancelled
+    /// or the save did not happen.
+    func confirmClose(window: NSWindow?, completion: @escaping (Bool) -> Void) {
+        if !isDirty || closeApproved {
+            completion(true)
+            return
+        }
+        // A nudge is already on screen (for example ⌘Q while the close sheet
+        // is up) — let the pending one decide.
+        if isNudging {
+            completion(false)
+            return
+        }
+        isNudging = true
+
+        let finish: (Bool) -> Void = { [weak self] proceed in
+            guard let self else { return }
+            self.isNudging = false
+            if proceed { self.closeApproved = true }
+            completion(proceed)
+        }
+
+        let alert = NSAlert()
+        let name = currentFileURL?.lastPathComponent ?? "Untitled"
+        alert.messageText = "Do you want to save the changes you made to “\(name)”?"
+        alert.informativeText = "Your changes will be lost if you don’t save them."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Don’t Save")
+        alert.buttons[2].hasDestructiveAction = true
+
+        let handle: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            guard let self else { return }
+            switch response {
+            case .alertFirstButtonReturn:
+                self.saveDocument { saved in finish(saved) }
+            case .alertThirdButtonReturn:
+                finish(true)
+            default:
+                finish(false)
+            }
+        }
+
+        if let window {
+            alert.beginSheetModal(for: window, completionHandler: handle)
+        } else {
+            // No window to hang the sheet on — run modally, but not before
+            // applicationShouldTerminate has returned .terminateLater.
+            DispatchQueue.main.async { handle(alert.runModal()) }
         }
     }
 
@@ -141,7 +243,8 @@ final class AppState: ObservableObject {
         // The editor text is not persisted anywhere, so resetting simply means
         // forgetting the current file and asking the web layer to empty the editor.
         currentFileURL = nil
-        windowTitle = "MDacViewer"
+        isDirty = false
+        refreshWindowTitle()
         web?.reset()
     }
 

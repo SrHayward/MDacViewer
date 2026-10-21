@@ -18,6 +18,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 - **Live preview** — renders as you type; no file or save needed
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text
+- **Unsaved-changes guard** — an asterisk in the title marks edits to an open file (⌘S clears it), and closing the window or quitting (⌘Q) asks Save / Don't Save / Cancel first
 - **Sync scroll** — the editor and preview scroll together (toggleable)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation

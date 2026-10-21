@@ -39,6 +39,10 @@ struct EditorWebView: NSViewRepresentable {
                 DispatchQueue.main.async {
                     AppState.shared.webReady(dark: dark, sync: sync)
                 }
+            } else if type == "dirty" {
+                DispatchQueue.main.async {
+                    AppState.shared.markDirty()
+                }
             }
         }
 
