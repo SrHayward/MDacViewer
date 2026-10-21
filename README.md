@@ -18,7 +18,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 - **Live preview** — renders as you type; no file or save needed
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text
-- **Unsaved-changes guard** — an asterisk in the title marks edits to an open file (⌘S clears it), and closing the window or quitting (⌘Q) asks Save / Don't Save / Cancel first
+- **Unsaved-changes guard** — an asterisk in the title marks any unsaved edit, including text typed in a fresh session (⌘S saves and clears it), and closing the window or quitting (⌘Q) asks Save / Don't Save / Cancel first
 - **Sync scroll** — the editor and preview scroll together (toggleable)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation
@@ -33,7 +33,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ## Download & install
 
-1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.2.dmg` (or newer).
+1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.3.dmg` (or newer).
 2. Open the DMG and drag **MDacViewer** into your **Applications** folder.
 3. Launch it from Applications or Spotlight.
 

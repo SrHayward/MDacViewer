@@ -56,21 +56,21 @@ Running these steps requires a Mac with Xcode or the Command Line Tools; use
 
 ### What it does
 
-While a file is open, any edit puts an asterisk in the window title —
-`MDacViewer — notes.md *` — and saving removes it. With no file open the title stays
-exactly as before, and untitled text never gets an asterisk.
+Any edit — with or without an open file — puts an asterisk in the window title:
+`MDacViewer — notes.md *`, or `MDacViewer *` for untitled text. Saving removes
+it.
 
-If the window is closed (red button) or the app is quit (⌘Q) while an open file has
+If the window is closed (red button) or the app is quit (⌘Q) while there are
 unsaved edits, the standard three-button alert appears: **Save** (default),
-**Cancel**, and **Don't Save** (destructive). Save writes to the open file and then
-closes; Cancel leaves everything as it was; Don't Save closes and discards the edit.
+**Cancel**, and **Don't Save** (destructive). Save writes to the open file (or
+asks where to save untitled text) and then closes; Cancel leaves everything as
+it was; Don't Save closes and discards the edit.
 
 Notes:
 
 - ⌘W is not wired to anything in this app (there is no Close menu item), so the red
   button is the window-close path; ⌘Q is the quit path. Both show the same alert.
 - Save As, Open and Reset all clear the flag.
-- Untitled pasted text never prompts — only an open file can lose its link.
 - Implementation note: SwiftUI owns the main window's `NSWindowDelegate` and relies
   on it (replacing the delegate makes the window close itself on the next scene
   update, e.g. when a file is opened), so the red button's action is intercepted
@@ -87,5 +87,52 @@ Notes:
 5. Close again and choose Don't Save. The app quits and the file on disk is unchanged
    from the last save.
 6. Edit once more, press ⌘Q, and choose Save. The app writes the file and then quits.
-7. With no file open, paste some text: the title stays exactly `MDacViewer` and
-   closing the window does not prompt.
+7. With no file open, type some text: the title shows `MDacViewer *`, and
+   closing prompts; Save opens a Save As panel.
+
+## Bug fix: red close button crash + unsaved asterisk for untitled text
+
+### What the app used to do wrong, and why
+
+Two problems showed up together in a fresh session (no file opened yet).
+
+First, typing did not put the asterisk in the title. The dirty flag was only
+tracked while a file was open — `markDirty()` ignored every edit when there was
+no file — so the title stayed plain "MDacViewer" even with unsaved text in the
+editor, and closing would have discarded that text without asking.
+
+Second, clicking the red close button crashed the app. Since 1.0.2 the button's
+action is intercepted so the Save / Don't Save / Cancel nudge can run before the
+window closes. When there was nothing to save, that action called
+`performClose(nil)` — but `performClose` simulates a click on the same close
+button, so the action ran again, and again, until the main thread's stack
+overflowed. The crash report shows roughly 10,000 recursive
+`WindowFrameSaver.Coordinator.closeButtonPressed` frames and an `EXC_BAD_ACCESS`
+in the stack guard region.
+
+### What it does now
+
+- Typing in a fresh session shows `MDacViewer *` in the title, exactly like
+  editing an open file.
+- Closing the window (red button) or quitting (⌘Q) with untitled unsaved text
+  shows the same Save / Don't Save / Cancel alert. Save opens the Save As panel;
+  Don't Save discards the text.
+- A close-button click with nothing to save closes the window normally — the app
+  quits immediately instead of recursing until the stack overflows.
+
+### How to verify this manually on a Mac
+
+1. Launch MDacViewer without opening a file. The title is exactly "MDacViewer".
+2. Type a few characters. The title becomes `MDacViewer *`.
+3. Click the red close button. The Save / Don't Save / Cancel alert appears —
+   the app does NOT crash.
+4. Choose Cancel. The window stays open with the text intact.
+5. Click the red button again and choose Don't Save. The app quits.
+6. Relaunch and click the red button without typing anything. The app closes
+   cleanly with no alert and no crash.
+
+Automated check: `./Scripts/verify-close-button.sh` compiles the window and
+title-tracking code into a small harness that clicks the close button
+in-process, then asserts the window actually closes and the asterisk appears.
+It needs no Accessibility permission. (Before the fix, it dies with the same
+SIGSEGV as the crash report.)
