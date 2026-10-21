@@ -14,9 +14,10 @@ final class AppState: ObservableObject {
     @Published var windowTitle = "MDacViewer"
     @Published var showResetConfirm = false
 
-    /// True while the open file has edits that have not been saved.
-    /// Only tracked for files: untitled text never shows the asterisk or the
-    /// close nudge, because only a file link can be lost.
+    /// True while the editor holds edits that have not been saved. This covers
+    /// untitled text typed in a fresh session too, which is shown as
+    /// "MDacViewer *" — unsaved text must never be discarded silently, so the
+    /// close/quit nudge applies to it as well.
     @Published private(set) var isDirty = false {
         didSet { if isDirty != oldValue { refreshWindowTitle() } }
     }
@@ -94,9 +95,10 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Called by the web layer whenever the editor text changes.
+    /// Called by the web layer whenever the editor text changes. Untitled text
+    /// counts as dirty too, so typing in a fresh session shows the asterisk and
+    /// closing prompts instead of discarding the text.
     func markDirty() {
-        guard currentFileURL != nil else { return }
         if !isDirty { isDirty = true }
     }
 
@@ -169,10 +171,10 @@ final class AppState: ObservableObject {
 
     // MARK: - Unsaved-changes nudge
 
-    /// Shows the standard Save / Cancel / Don't Save alert for an open file
-    /// with unsaved edits. `completion(true)` means it is safe to close or
-    /// quit (saved, or explicitly discarded); `false` means the user cancelled
-    /// or the save did not happen.
+    /// Shows the standard Save / Cancel / Don't Save alert when there are
+    /// unsaved edits (an open file, or untitled text). `completion(true)` means
+    /// it is safe to close or quit (saved, or explicitly discarded); `false`
+    /// means the user cancelled or the save did not happen.
     func confirmClose(window: NSWindow?, completion: @escaping (Bool) -> Void) {
         if !isDirty || closeApproved {
             completion(true)

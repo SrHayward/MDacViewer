@@ -70,7 +70,11 @@ struct WindowFrameSaver: NSViewRepresentable {
             guard let window else { return }
             let app = AppState.shared
             guard app.isDirty && !app.closeApproved else {
-                window.performClose(nil)
+                // window.close(), NOT performClose(nil): performClose simulates
+                // a click on the close button, whose action is this method —
+                // the action would fire again and recurse until the stack
+                // overflows (the 1.0.2 crash).
+                window.close()
                 return
             }
             app.confirmClose(window: window) { proceed in
