@@ -18,6 +18,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 - **Live preview** — renders as you type; no file or save needed
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text
+- **Unsaved-changes guard** — an asterisk in the title marks edits to an open file (⌘S clears it), and closing the window or quitting (⌘Q) asks Save / Don't Save / Cancel first
 - **Sync scroll** — the editor and preview scroll together (toggleable)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation
@@ -32,7 +33,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ## Download & install
 
-1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.1.dmg` (or newer).
+1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.0.2.dmg` (or newer).
 2. Open the DMG and drag **MDacViewer** into your **Applications** folder.
 3. Launch it from Applications or Spotlight.
 
@@ -77,7 +78,7 @@ Requirements: an Apple Silicon Mac with either Xcode **or** just the Command Lin
 git clone https://github.com/SrHayward/MDacViewer.git
 cd MDacViewer
 make run      # builds MDacViewer.app and launches it
-make dmg      # creates dist/MDacViewer-1.0.1.dmg (drag-to-install)
+make dmg      # creates dist/MDacViewer-1.0.2.dmg (drag-to-install)
 ```
 
 | Command | What it does |
@@ -95,7 +96,7 @@ The rendering libraries in `Web/vendor/` are pinned and committed, so a fresh cl
 
 ## Releases & versioning
 
-Releases are fully automated with GitHub Actions. When a version tag such as `v1.0.1` is pushed, a GitHub-hosted Apple Silicon Mac builds the app, packages it into a DMG and publishes it on the [Releases page](https://github.com/SrHayward/MDacViewer/releases) — so every release is reproducible from source.
+Releases are fully automated with GitHub Actions. When a version tag such as `v1.0.2` is pushed, a GitHub-hosted Apple Silicon Mac builds the app, packages it into a DMG and publishes it on the [Releases page](https://github.com/SrHayward/MDacViewer/releases) — so every release is reproducible from source.
 
 ## Credits & license
 

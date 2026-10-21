@@ -27,12 +27,15 @@ struct WindowFrameSaver: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {}
 
-    final class Coordinator {
+    final class Coordinator: NSObject {
         private static let frameKey = "mainWindowFrame"
         private var tokens: [NSObjectProtocol] = []
         private var saveWorkItem: DispatchWorkItem?
+        private weak var window: NSWindow?
 
         func attach(to window: NSWindow) {
+            self.window = window
+            interceptCloseButton(window)
             restore(window)
 
             let center = NotificationCenter.default
@@ -47,6 +50,33 @@ struct WindowFrameSaver: NSViewRepresentable {
                 self.scheduleSave(window)
             }
             tokens = [resize, move]
+        }
+
+        // MARK: - Unsaved-changes nudge
+        //
+        // SwiftUI owns the window's delegate and relies on it for the scene
+        // lifecycle — replacing it makes the window close itself on the next
+        // scene update (for example when a file is opened). The red close
+        // button is intercepted instead; quitting (⌘Q) is covered by
+        // applicationShouldTerminate.
+
+        private func interceptCloseButton(_ window: NSWindow) {
+            guard let button = window.standardWindowButton(.closeButton) else { return }
+            button.target = self
+            button.action = #selector(closeButtonPressed)
+        }
+
+        @objc private func closeButtonPressed() {
+            guard let window else { return }
+            let app = AppState.shared
+            guard app.isDirty && !app.closeApproved else {
+                window.performClose(nil)
+                return
+            }
+            app.confirmClose(window: window) { proceed in
+                guard proceed else { return }
+                window.close()
+            }
         }
 
         // MARK: - Persistence
