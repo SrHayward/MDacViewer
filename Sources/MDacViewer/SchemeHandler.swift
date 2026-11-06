@@ -6,9 +6,12 @@ import WebKit
 final class SchemeHandler: NSObject, WKURLSchemeHandler {
     private let baseURL: URL
 
-    override init() {
+    /// - Parameter baseURL: Directory to serve. Defaults to the `web` folder in
+    ///   the app bundle; tests pass the repository's `Web/` folder instead.
+    init(baseURL: URL? = nil) {
         let resources = Bundle.main.resourceURL ?? Bundle.main.bundleURL
-        baseURL = resources.appendingPathComponent("web", isDirectory: true).standardizedFileURL
+        self.baseURL = (baseURL ?? resources.appendingPathComponent("web", isDirectory: true))
+            .standardizedFileURL
         super.init()
     }
 

@@ -40,6 +40,16 @@ struct MDacViewerApp: App {
                     .keyboardShortcut("c", modifiers: [.command, .shift])
                 Button("Reset Editor…") { app.requestReset() }
             }
+
+            CommandGroup(after: .toolbar) {
+                Divider()
+                Button("Increase Preview Text Size") { app.increasePreviewFontSize() }
+                    .keyboardShortcut("+", modifiers: .command)
+                Button("Decrease Preview Text Size") { app.decreasePreviewFontSize() }
+                    .keyboardShortcut("-", modifiers: .command)
+                Button("Reset Preview Text Size") { app.resetPreviewFontSize() }
+                    .keyboardShortcut("0", modifiers: .command)
+            }
         }
 
         Window("About MDacViewer", id: "about") {

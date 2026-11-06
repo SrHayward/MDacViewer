@@ -136,3 +136,43 @@ title-tracking code into a small harness that clicks the close button
 in-process, then asserts the window actually closes and the asterisk appears.
 It needs no Accessibility permission. (Before the fix, it dies with the same
 SIGSEGV as the crash report.)
+
+## Feature: resizable preview text
+
+### What it does
+
+The rendered preview has its own text size, independent of the editor. Open the
+text-size button in the toolbar (the `A A`-style icon beside Dark mode) and drag
+the slider, or use its stepper, to pick any size from **6 px to 72 px** in 1 px
+steps. The change is live: body text, headings, lists, tables, code blocks and
+Mermaid diagram labels all scale together.
+
+The current size is shown in the popover (for example “16 px”) and is saved for
+next launch. **Reset** returns it to 16 px. The same actions are available from
+the View menu and with the keyboard:
+
+| Shortcut | Action |
+| --- | --- |
+| ⌘+ | Increase preview text size by 1 px |
+| ⌘− | Decrease preview text size by 1 px |
+| ⌘0 | Reset preview text size to 16 px |
+
+The editor's own font size is deliberately unchanged.
+
+### How to verify this manually on a Mac
+
+1. Launch MDacViewer and open the built-in sample (or paste some Markdown with a
+   heading, body text, a table and a code block).
+2. Click the text-size toolbar icon. The popover shows “16 px”.
+3. Drag the slider to 6 px. The preview shrinks to the 6 px minimum; the editor
+   on the left stays exactly as it was.
+4. Drag to the far right: the preview stops at 72 px.
+5. Press ⌘+ and ⌘− a few times: the preview grows and shrinks by 1 px each time.
+   Press ⌘0: the preview returns to 16 px.
+6. Choose 23 px, quit and relaunch. Open the popover again: it still reads
+   “23 px”, and the preview renders at that size.
+
+Automated check: `./Scripts/verify-preview-font-size.sh` loads the real `Web/`
+app in a WKWebView and verifies live resizing, heading scaling, the 6 px/72 px
+limits, persistence across a reload, and the native Swift clamp/persistence
+logic. It needs a logged-in Mac desktop session but no Accessibility permission.

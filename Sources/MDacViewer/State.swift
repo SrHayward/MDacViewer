@@ -8,11 +8,26 @@ final class AppState: ObservableObject {
     static let shared = AppState()
 
     private static let darkModeKey = "darkMode"
+    private static let previewFontSizeKey = "previewFontSize"
+
+    static let minPreviewFontSize = 6
+    static let maxPreviewFontSize = 72
+    static let defaultPreviewFontSize = 16
 
     @Published var darkMode = false
     @Published var syncScroll = false
     @Published var windowTitle = "MDacViewer"
     @Published var showResetConfirm = false
+
+    /// Preview pane text size in points (CSS pixels), adjustable from 6px.
+    /// Persisted here and mirrored to the web layer's localStorage.
+    @Published private(set) var previewFontSize: Int = 16 {
+        didSet {
+            guard previewFontSize != oldValue else { return }
+            UserDefaults.standard.set(previewFontSize, forKey: Self.previewFontSizeKey)
+            web?.setPreviewFontSize(previewFontSize)
+        }
+    }
 
     /// True while the editor holds edits that have not been saved. This covers
     /// untitled text typed in a fresh session too, which is shown as
@@ -35,6 +50,10 @@ final class AppState: ObservableObject {
 
     private init() {
         darkMode = UserDefaults.standard.bool(forKey: Self.darkModeKey)
+        let storedFontSize = UserDefaults.standard.integer(forKey: Self.previewFontSizeKey)
+        previewFontSize = storedFontSize == 0
+            ? Self.defaultPreviewFontSize
+            : Self.clampedPreviewFontSize(storedFontSize)
         applyAppearance()
     }
 
@@ -45,8 +64,31 @@ final class AppState: ObservableObject {
     func pushSettingsToWeb() {
         web?.setTheme(dark: darkMode)
         web?.setSyncScroll(enabled: syncScroll)
+        web?.setPreviewFontSize(previewFontSize)
         UserDefaults.standard.set(darkMode, forKey: Self.darkModeKey)
         applyAppearance()
+    }
+
+    // MARK: - Preview text size
+
+    func setPreviewFontSize(_ size: Int) {
+        previewFontSize = Self.clampedPreviewFontSize(size)
+    }
+
+    func increasePreviewFontSize() {
+        setPreviewFontSize(previewFontSize + 1)
+    }
+
+    func decreasePreviewFontSize() {
+        setPreviewFontSize(previewFontSize - 1)
+    }
+
+    func resetPreviewFontSize() {
+        setPreviewFontSize(Self.defaultPreviewFontSize)
+    }
+
+    static func clampedPreviewFontSize(_ size: Int) -> Int {
+        min(maxPreviewFontSize, max(minPreviewFontSize, size))
     }
 
     /// Switches the entire app — title bar, toolbar, menus and panes — between
@@ -56,9 +98,10 @@ final class AppState: ObservableObject {
     }
 
     /// Called by the web layer once it has booted, reporting its persisted settings.
-    func webReady(dark: Bool, sync: Bool) {
+    func webReady(dark: Bool, sync: Bool, previewFontSize: Int) {
         darkMode = dark
         syncScroll = sync
+        self.previewFontSize = Self.clampedPreviewFontSize(previewFontSize)
         if let text = pendingInitialText {
             pendingInitialText = nil
             web?.setText(text)

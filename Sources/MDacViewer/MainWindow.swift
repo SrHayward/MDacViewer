@@ -3,6 +3,7 @@ import SwiftUI
 struct MainWindow: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var updates = UpdateChecker.shared
+    @State private var showingTextSize = false
 
     var body: some View {
         EditorWebView()
@@ -52,6 +53,15 @@ struct MainWindow: View {
                         }
                         .help("Switch between light and dark appearance")
 
+                        Button { showingTextSize.toggle() } label: {
+                            Image(systemName: "textformat.size")
+                        }
+                        .help("Preview text size (⌘+ / ⌘−)")
+                        .accessibilityLabel("Preview text size")
+                        .popover(isPresented: $showingTextSize, arrowEdge: .bottom) {
+                            PreviewTextSizePopover(app: app)
+                        }
+
                         if updates.updateAvailable {
                             Button { updates.openReleasesPage() } label: {
                                 Image(systemName: "arrow.down.circle")
@@ -91,4 +101,59 @@ struct MainWindow: View {
         return NSImage(systemSymbolName: "arrow.up.right", accessibilityDescription: "GitHub")
             ?? NSImage()
     }()
+}
+
+/// Toolbar popover for adjusting only the rendered preview's text size.
+private struct PreviewTextSizePopover: View {
+    @ObservedObject var app: AppState
+
+    private var size: Binding<Double> {
+        Binding(
+            get: { Double(app.previewFontSize) },
+            set: { app.setPreviewFontSize(Int($0.rounded())) }
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Preview text size")
+                    .font(.headline)
+                Spacer()
+                Text("\(app.previewFontSize) px")
+                    .font(.system(.body, design: .monospaced))
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 10) {
+                Text("6")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Slider(value: size,
+                       in: Double(AppState.minPreviewFontSize)...Double(AppState.maxPreviewFontSize),
+                       step: 1)
+                    .accessibilityLabel("Preview text size")
+                Text("72")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Stepper("", value: size,
+                        in: Double(AppState.minPreviewFontSize)...Double(AppState.maxPreviewFontSize),
+                        step: 1)
+                    .labelsHidden()
+                    .accessibilityLabel("Preview text size")
+            }
+
+            HStack {
+                Text("Saved for next time")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Button("Reset") { app.resetPreviewFontSize() }
+                    .disabled(app.previewFontSize == AppState.defaultPreviewFontSize)
+            }
+        }
+        .padding(16)
+        .frame(width: 320)
+    }
 }

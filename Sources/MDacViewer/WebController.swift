@@ -40,6 +40,12 @@ final class WebController {
         }
     }
 
+    func setPreviewFontSize(_ size: Int) {
+        enqueue { [weak self] in
+            self?.evaluate("window.mdac && window.mdac.setPreviewFontSize(\(size))")
+        }
+    }
+
     func reset() {
         enqueue { [weak self] in
             self?.evaluate("window.mdac && window.mdac.resetEditor()")
