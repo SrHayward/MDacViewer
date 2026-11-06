@@ -36,8 +36,10 @@ struct EditorWebView: NSViewRepresentable {
                 controller.markReady()
                 let dark = body["dark"] as? Bool ?? false
                 let sync = body["sync"] as? Bool ?? false
+                let fontSize = (body["fontSize"] as? NSNumber)?.intValue
+                    ?? AppState.defaultPreviewFontSize
                 DispatchQueue.main.async {
-                    AppState.shared.webReady(dark: dark, sync: sync)
+                    AppState.shared.webReady(dark: dark, sync: sync, previewFontSize: fontSize)
                 }
             } else if type == "dirty" {
                 DispatchQueue.main.async {

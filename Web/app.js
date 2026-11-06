@@ -15,6 +15,11 @@
   var STORE_DARK = 'mdac.dark';
   var STORE_SYNC = 'mdac.sync';
   var STORE_GUIDE = 'mdac.guide';
+  var STORE_PREVIEW_FONT_SIZE = 'mdac.previewFontSize';
+
+  var MIN_PREVIEW_FONT_SIZE = 6;
+  var MAX_PREVIEW_FONT_SIZE = 72;
+  var DEFAULT_PREVIEW_FONT_SIZE = 16;
 
   var bridge = (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge) || null;
   function post(message) { if (bridge) { bridge.postMessage(message); } }
@@ -25,9 +30,22 @@
   var outputEl = document.getElementById('output');
   var dividerEl = document.getElementById('divider');
 
+  function clampPreviewFontSize(value) {
+    var size = Math.round(Number(value));
+    if (!isFinite(size)) { size = DEFAULT_PREVIEW_FONT_SIZE; }
+    return Math.min(MAX_PREVIEW_FONT_SIZE, Math.max(MIN_PREVIEW_FONT_SIZE, size));
+  }
+
+  function storedPreviewFontSize() {
+    var stored = localStorage.getItem(STORE_PREVIEW_FONT_SIZE);
+    if (stored === null || stored === '') { return DEFAULT_PREVIEW_FONT_SIZE; }
+    return clampPreviewFontSize(stored);
+  }
+
   var state = {
     dark: localStorage.getItem(STORE_DARK) === 'true',
     sync: localStorage.getItem(STORE_SYNC) === 'true',
+    previewFontSize: storedPreviewFontSize(),
     guardUntil: 0,
     adapter: null,
   };
@@ -69,6 +87,7 @@
         startOnLoad: false,
         theme: state.dark ? 'dark' : 'default',
         securityLevel: 'strict',
+        themeVariables: { fontSize: state.previewFontSize + 'px' },
         flowchart: { useMaxWidth: true },
       });
       mermaid.run({
@@ -99,6 +118,13 @@
       state.adapter.setDark(dark);
       scheduleRender(); // re-render diagrams with the new theme
     }
+  }
+
+  function applyPreviewFontSize(size) {
+    state.previewFontSize = clampPreviewFontSize(size);
+    document.documentElement.style.setProperty(
+      '--mdac-preview-font-size', state.previewFontSize + 'px');
+    refreshPreviewMetrics();
   }
 
   // Cached scroll metrics. Reading scrollHeight forces a layout pass, so we
@@ -264,6 +290,7 @@
     state.adapter = adapter;
 
     applyTheme(state.dark);
+    applyPreviewFontSize(state.previewFontSize);
 
     // The editor always starts empty — we deliberately do not restore any
     // previously typed text. The only exception is the very first launch,
@@ -297,7 +324,7 @@
     scheduleRender();
     refreshPreviewMetrics();
 
-    post({ type: 'ready', dark: state.dark, sync: state.sync });
+    post({ type: 'ready', dark: state.dark, sync: state.sync, fontSize: state.previewFontSize });
   }
 
   /* ------------------------------ API used by the native app ------------------------------ */
@@ -320,6 +347,16 @@
       enabled = !!enabled;
       state.sync = enabled;
       try { localStorage.setItem(STORE_SYNC, String(enabled)); } catch (e) {}
+    },
+    setPreviewFontSize: function (size) {
+      applyPreviewFontSize(size);
+      try { localStorage.setItem(STORE_PREVIEW_FONT_SIZE, String(state.previewFontSize)); } catch (e) {}
+      // Diagram labels are baked into the SVG, so redraw them at the new size.
+      if (outputEl.querySelector('.mermaid')) { scheduleRender(); }
+      return state.previewFontSize;
+    },
+    getPreviewFontSize: function () {
+      return state.previewFontSize;
     },
     resetEditor: function () {
       setEditorText('');

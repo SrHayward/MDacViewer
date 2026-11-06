@@ -20,10 +20,11 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text
 - **Unsaved-changes guard** — an asterisk in the title marks any unsaved edit, including text typed in a fresh session (⌘S saves and clears it), and closing the window or quitting (⌘Q) asks Save / Don't Save / Cancel first
 - **Sync scroll** — the editor and preview scroll together (toggleable)
+- **Preview text size** — resize just the rendered preview from 6 px to 72 px, from the toolbar or with ⌘+ / ⌘− / ⌘0 (remembered between launches)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the editor, behind an “Are you sure?” confirmation
 - **Copy** — copies the full Markdown source to the clipboard
-- **Settings memory** — your dark-mode and sync-scroll settings come back when you reopen the app
+- **Settings memory** — your dark-mode, sync-scroll and preview text-size settings come back when you reopen the app
 - **GitHub-flavoured Markdown** — tables, strikethrough, nested lists, blockquotes and more
 - **Mermaid diagrams** — <code>```mermaid</code> blocks render as live diagrams
 - **Open from Finder** — double-click a `.md` file (or drag it onto the app) to open it
@@ -56,6 +57,8 @@ After that it launches like any other app.
 | ⌘S | Save — back to the opened file, or ask where to save pasted text |
 | ⇧⌘S | Save As |
 | ⇧⌘C | Copy the **full** Markdown source |
+| ⌘+ / ⌘− | Increase / decrease the preview text size |
+| ⌘0 | Reset the preview text size to 16 px |
 | ⌘C / ⌘V | Copy / paste the selected text as usual |
 | ⌘F | Find in the editor |
 | ⌘Z / ⇧⌘Z | Undo / redo |
