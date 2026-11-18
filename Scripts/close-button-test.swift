@@ -55,8 +55,12 @@ struct CloseButtonTest {
         check(state.windowTitle == "MDacViewer *",
               "title shows the unsaved-changes asterisk (got \"\(state.windowTitle)\")")
 
-        // 3. Opening a file names the title and clears the asterisk; editing
-        //    again puts it back after the file name.
+        // 3. Reset clears the untitled edit (so opening a file reuses the
+        //    pristine tab), then opening names the title and clears the
+        //    asterisk; editing again puts it back after the file name.
+        state.performReset()
+        check(!state.isDirty, "reset clears the unsaved flag")
+
         let file = FileManager.default.temporaryDirectory
             .appendingPathComponent("mdac-close-test-\(getpid()).md")
         try? "# hi\n".write(to: file, atomically: true, encoding: .utf8)

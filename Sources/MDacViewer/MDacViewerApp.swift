@@ -19,8 +19,12 @@ struct MDacViewerApp: App {
                 Button("About MDacViewer") { openWindow(id: "about") }
             }
 
-            // Remove the default "New" item — this app is a single window.
-            CommandGroup(replacing: .newItem) {}
+            // This app is a single window; the replacement for "New" is a new
+            // document tab inside it.
+            CommandGroup(replacing: .newItem) {
+                Button("New Tab") { app.newTab() }
+                    .keyboardShortcut("t", modifiers: .command)
+            }
 
             CommandGroup(after: .newItem) {
                 Button("Open…") { app.openDocument() }
@@ -32,6 +36,9 @@ struct MDacViewerApp: App {
                     .keyboardShortcut("s", modifiers: .command)
                 Button("Save As…") { app.saveDocumentAs() }
                     .keyboardShortcut("s", modifiers: [.command, .shift])
+                Divider()
+                Button("Close Tab") { app.closeCurrentTab() }
+                    .keyboardShortcut("w", modifiers: .command)
             }
 
             CommandGroup(after: .pasteboard) {
@@ -67,9 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // Handles "Open With MDacViewer" / double-click on a .md file in Finder.
+    // Each file becomes its own tab.
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first else { return }
-        AppState.shared.open(url: url)
+        for url in urls {
+            AppState.shared.open(url: url)
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

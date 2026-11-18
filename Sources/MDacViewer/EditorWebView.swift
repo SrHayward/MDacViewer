@@ -42,8 +42,13 @@ struct EditorWebView: NSViewRepresentable {
                     AppState.shared.webReady(dark: dark, sync: sync, previewFontSize: fontSize)
                 }
             } else if type == "dirty" {
+                let tabID = body["tab"] as? String
                 DispatchQueue.main.async {
-                    AppState.shared.markDirty()
+                    if let tabID {
+                        AppState.shared.markDirty(tabID: tabID)
+                    } else {
+                        AppState.shared.markDirty()
+                    }
                 }
             }
         }

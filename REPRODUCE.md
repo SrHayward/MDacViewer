@@ -68,8 +68,9 @@ it was; Don't Save closes and discards the edit.
 
 Notes:
 
-- ⌘W is not wired to anything in this app (there is no Close menu item), so the red
-  button is the window-close path; ⌘Q is the quit path. Both show the same alert.
+- ⌘W closes the current tab (⌘T opens a new one); the red button closes the
+  window and ⌘Q quits. All of them show the same Save / Don't Save / Cancel alert,
+  and a quit with several edited tabs asks once per tab.
 - Save As, Open and Reset all clear the flag.
 - Implementation note: SwiftUI owns the main window's `NSWindowDelegate` and relies
   on it (replacing the delegate makes the window close itself on the next scene
@@ -176,3 +177,48 @@ Automated check: `./Scripts/verify-preview-font-size.sh` loads the real `Web/`
 app in a WKWebView and verifies live resizing, heading scaling, the 6 px/72 px
 limits, persistence across a reload, and the native Swift clamp/persistence
 logic. It needs a logged-in Mac desktop session but no Accessibility permission.
+
+## Feature: document tabs + width-safe preview
+
+### What it does
+
+The window now has a tab bar above the editor, like a browser. **+** (or ⌘T)
+opens a new tab, **×** (or ⌘W) closes the current one, and clicking a tab
+switches to it. Opening several files at once, or double-clicking files in
+Finder, gives each its own tab; opening a file that is already open just brings
+its tab forward.
+
+Each tab keeps its own Monaco editor model, so its text and undo history
+survive switching tabs, along with both panes' scroll positions. A dot appears
+on a tab with unsaved changes, and the window title shows the usual asterisk.
+Closing a tab, closing the window or quitting asks Save / Don't Save / Cancel
+for every edited tab — saving a hidden tab writes its text back to its own file.
+
+The preview no longer scrolls sideways. Long code lines wrap, long URLs and
+inline code break, and wide tables size to the pane instead of becoming a
+horizontal scroller. This is what fixes the screenshot in the original report,
+where a long line inside a fenced code block produced a scrollbar.
+
+### How to verify this manually on a Mac
+
+1. Open two Markdown files (⌘O allows selecting several, or double-click them
+   in Finder). Two tabs appear, and the second file is active.
+2. Type in the first tab, switch to the second, then back. The text and cursor
+   position are preserved, and the first tab shows an unsaved dot.
+3. Press ⌘W. The Save / Don't Save / Cancel alert names the edited tab. Choose
+   Cancel and the tab stays.
+4. Press ⌘W again, choose Don't Save: only that tab closes; the other tab and
+   its text remain.
+5. Paste a very long line inside a fenced code block, a long unbroken URL, and
+   a wide table. The preview wraps all of them; dragging the preview pane
+   narrower never reveals a horizontal scrollbar.
+6. Press ⌘Q with two edited tabs. The save prompt appears once per tab, naming
+   each file; choose Save for one and don't save the other, then check that only
+   the saved file changed on disk.
+
+Automated check: `./Scripts/verify-tabs-and-layout.sh` loads the real `Web/`
+app in a WKWebView, drives the native `AppState` tab API, and verifies
+independent tab text, tab switching, dirty state and model disposal. It also
+renders a long code line, a long URL and a wide table and asserts that neither
+the preview pane nor any of those elements overflows horizontally. It needs a
+logged-in Mac desktop session but no Accessibility permission.

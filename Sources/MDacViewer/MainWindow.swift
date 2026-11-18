@@ -6,7 +6,10 @@ struct MainWindow: View {
     @State private var showingTextSize = false
 
     var body: some View {
-        EditorWebView()
+        VStack(spacing: 0) {
+            DocumentTabBar(app: app)
+            EditorWebView()
+        }
             .frame(minWidth: 880, minHeight: 540)
             .background(WindowFrameSaver())
             .navigationTitle(app.windowTitle)
@@ -87,7 +90,7 @@ struct MainWindow: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Reset", role: .destructive) { app.performReset() }
             } message: {
-                Text("Are you sure you want to reset? This will clear the editor and any unsaved text.")
+                Text("Are you sure you want to reset? This will clear the editor and any unsaved text in the current tab.")
             }
     }
 

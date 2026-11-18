@@ -63,6 +63,95 @@
     suppressDirty = false;
   }
 
+  /* ------------------------------ tabs ------------------------------ */
+
+  // Each tab owns one editor model — Monaco models keep their own text and
+  // undo history — plus both panes' scroll positions. Only the active tab is
+  // attached to the editor, so switching tabs swaps models instead of loading
+  // another copy of Monaco.
+  var tabs = Object.create(null);
+  var activeTabId = null;
+  var claimedBootModel = false;
+
+  function createTab(id, text) {
+    if (!id || tabs[id]) { return; }
+    var hasText = typeof text === 'string';
+
+    var entry = { model: null, viewState: null, previewScroll: 0 };
+
+    if (!claimedBootModel) {
+      // The first tab carries over the editor's boot content (the one-off
+      // first-run sample) into its own model, unless the native side has an
+      // explicit document for it. The editor's implicit boot model is owned
+      // by Monaco and is replaced — and disposed — when the first tab is
+      // attached, so its text must be copied first.
+      claimedBootModel = true;
+      entry.model = state.adapter.createModel(hasText ? text : state.adapter.getValue());
+    } else {
+      entry.model = state.adapter.createModel(hasText ? text : '');
+    }
+
+    tabs[id] = entry;
+    if (activeTabId === null) {
+      activeTabId = id;
+      state.adapter.setModel(entry.model);
+      render();
+    }
+  }
+
+  function saveActiveTabState() {
+    if (!activeTabId || !tabs[activeTabId]) { return; }
+    tabs[activeTabId].viewState = state.adapter.saveViewState();
+    tabs[activeTabId].previewScroll = previewPane.scrollTop;
+  }
+
+  function activateTab(id) {
+    if (!id || id === activeTabId || !tabs[id]) { return; }
+    saveActiveTabState();
+    activeTabId = id;
+    state.adapter.setModel(tabs[id].model);
+    state.adapter.restoreViewState(tabs[id].viewState);
+    previewPane.scrollTop = tabs[id].previewScroll || 0;
+    render();
+  }
+
+  function closeTab(id) {
+    var entry = tabs[id];
+    if (!entry) { return; }
+    if (id === activeTabId) { saveActiveTabState(); }
+
+    delete tabs[id];
+    if (id === activeTabId) {
+      activeTabId = null;
+      var remaining = Object.keys(tabs);
+      if (remaining.length) {
+        // Attach another tab before disposing the model we are leaving.
+        activateTab(remaining[0]);
+      } else {
+        // Defensive: the native side keeps at least one tab, but leave the
+        // editor with a valid empty model if every tab is ever removed.
+        var blank = state.adapter.createModel('');
+        state.adapter.setModel(blank);
+        outputEl.innerHTML = '';
+      }
+    }
+    state.adapter.disposeModel(entry.model);
+  }
+
+  function setTabText(id, text) {
+    var entry = tabs[id];
+    if (!entry) { return; }
+    suppressDirty = true;
+    state.adapter.setModelValue(entry.model, text);
+    suppressDirty = false;
+    if (id === activeTabId) { scheduleRender(); }
+  }
+
+  function getTabText(id) {
+    var entry = tabs[id];
+    return entry ? state.adapter.modelValue(entry.model) : '';
+  }
+
   /* ------------------------------ rendering ------------------------------ */
 
   marked.setOptions({ gfm: true });
@@ -173,11 +262,34 @@
     textarea.className = 'fallback-editor';
     textarea.spellcheck = false;
     el.appendChild(textarea);
+
+    var current = { text: '' };
+
     return {
       kind: 'textarea',
-      getValue: function () { return textarea.value; },
-      setValue: function (value) { textarea.value = value; },
-      onChange: function (cb) { textarea.addEventListener('input', cb); },
+      getValue: function () { return current.text; },
+      setValue: function (value) { current.text = value; textarea.value = value; },
+      createModel: function (text) { return { text: text || '' }; },
+      setModel: function (model) {
+        current = model;
+        textarea.value = model.text;
+      },
+      modelValue: function (model) { return model.text; },
+      setModelValue: function (model, text) {
+        model.text = text;
+        if (model === current) { textarea.value = text; }
+      },
+      disposeModel: function () {},
+      saveViewState: function () { return textarea.scrollTop; },
+      restoreViewState: function (scrollTop) {
+        if (typeof scrollTop === 'number') { textarea.scrollTop = scrollTop; }
+      },
+      onChange: function (cb) {
+        textarea.addEventListener('input', function () {
+          current.text = textarea.value;
+          cb();
+        });
+      },
       onScroll: function (cb) { textarea.addEventListener('scroll', cb); },
       scrollRatio: function () {
         var max = textarea.scrollHeight - textarea.clientHeight;
@@ -224,6 +336,17 @@
         kind: 'monaco',
         getValue: function () { return editor.getValue(); },
         setValue: function (value) { editor.setValue(value); },
+        createModel: function (text) { return monaco.editor.createModel(text || '', 'markdown'); },
+        setModel: function (model) { editor.setModel(model); },
+        modelValue: function (model) { return model.getValue(); },
+        setModelValue: function (model, text) { model.setValue(text); },
+        disposeModel: function (model) {
+          try { if (model && !model.isDisposed()) { model.dispose(); } } catch (e) {}
+        },
+        saveViewState: function () { return editor.saveViewState(); },
+        restoreViewState: function (viewState) {
+          if (viewState) { editor.restoreViewState(viewState); }
+        },
         onChange: function (cb) { editor.onDidChangeModelContent(cb); },
         onScroll: function (cb) { editor.onDidScrollChange(cb); },
         scrollRatio: function () {
@@ -306,7 +429,9 @@
     }
 
     adapter.onChange(function () {
-      if (!suppressDirty) { post({ type: 'dirty', dirty: true }); }
+      if (!suppressDirty) {
+        post({ type: 'dirty', dirty: true, tab: activeTabId });
+      }
       scheduleRender();
     });
     adapter.onScroll(function () {
@@ -325,6 +450,7 @@
     refreshPreviewMetrics();
 
     post({ type: 'ready', dark: state.dark, sync: state.sync, fontSize: state.previewFontSize });
+    window.mdac.isReady = true;
   }
 
   /* ------------------------------ API used by the native app ------------------------------ */
@@ -335,7 +461,25 @@
       scheduleRender();
     },
     getText: function () {
-      return state.adapter.getValue();
+      return activeTabId ? getTabText(activeTabId) : state.adapter.getValue();
+    },
+    createTab: function (id, text) {
+      createTab(id, text);
+    },
+    activateTab: function (id) {
+      activateTab(id);
+    },
+    closeTab: function (id) {
+      closeTab(id);
+    },
+    setTabText: function (id, text) {
+      setTabText(id, text);
+    },
+    getTabText: function (id) {
+      return getTabText(id);
+    },
+    getActiveTabId: function () {
+      return activeTabId;
     },
     setTheme: function (dark) {
       dark = !!dark;

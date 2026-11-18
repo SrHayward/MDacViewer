@@ -1,4 +1,4 @@
-VERSION ?= 1.0.4
+VERSION ?= 1.1.0
 
 .PHONY: app run dmg icon vendor clean
 

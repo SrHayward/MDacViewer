@@ -5,7 +5,7 @@ import WebKit
 /// Calls made before the web layer signals "ready" are queued and replayed.
 final class WebController {
     private weak var webView: WKWebView?
-    private var isReady = false
+    private(set) var isReady = false
     private var queue: [() -> Void] = []
 
     func attach(_ webView: WKWebView) {
@@ -25,6 +25,52 @@ final class WebController {
     func setText(_ text: String) {
         enqueue { [weak self] in
             self?.evaluate("window.mdac && window.mdac.setText(\(WebController.jsString(text)))")
+        }
+    }
+
+    // MARK: - Tabs
+
+    /// Registers a tab's own editor model. The first tab carries over the
+    /// editor's boot content (which may hold the first-run sample); later tabs
+    /// start fresh.
+    func createTab(id: String, text: String? = nil) {
+        enqueue { [weak self] in
+            let idArg = WebController.jsString(id)
+            // nil means "no explicit document": the web layer keeps the
+            // editor's boot content for the first tab (the first-run sample),
+            // and starts later tabs empty.
+            let textArg = text.map { WebController.jsString($0) } ?? "undefined"
+            self?.evaluate("window.mdac && window.mdac.createTab(\(idArg), \(textArg))")
+        }
+    }
+
+    func activateTab(id: String) {
+        enqueue { [weak self] in
+            self?.evaluate("window.mdac && window.mdac.activateTab(\(WebController.jsString(id)))")
+        }
+    }
+
+    func closeTab(id: String) {
+        enqueue { [weak self] in
+            self?.evaluate("window.mdac && window.mdac.closeTab(\(WebController.jsString(id)))")
+        }
+    }
+
+    func setText(_ text: String, tabID: String) {
+        enqueue { [weak self] in
+            let idArg = WebController.jsString(tabID)
+            let textArg = WebController.jsString(text)
+            self?.evaluate("window.mdac && window.mdac.setTabText(\(idArg), \(textArg))")
+        }
+    }
+
+    func getText(tabID: String, completion: @escaping (String) -> Void) {
+        enqueue { [weak self] in
+            self?.webView?.evaluateJavaScript(
+                "window.mdac ? window.mdac.getTabText(\(WebController.jsString(tabID))) : \"\""
+            ) { result, _ in
+                completion((result as? String) ?? "")
+            }
         }
     }
 

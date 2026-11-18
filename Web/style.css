@@ -58,11 +58,47 @@ html[data-theme="dark"] #preview-pane { background: #22272e; }
 #output {
   padding: 28px 36px 80px;
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
 }
 
 /* Preview text size — adjustable from the toolbar, 6px minimum. */
 #output.markdown-body {
   font-size: var(--mdac-preview-font-size, 16px);
+}
+
+/* Keep every block inside the preview's width — no horizontal scrollbar.
+ * Code blocks wrap instead of scrolling, and long unbroken strings (URLs,
+ * hashes, inline code) break rather than widening the pane. */
+#output pre {
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#output pre code,
+#output pre tt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* github-markdown-css makes tables a block-level scroller. Let them size to
+ * the pane instead, so wide tables wrap their cells rather than scrolling. */
+#output table {
+  display: table;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  table-layout: fixed;
+}
+
+#output th,
+#output td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Mermaid diagrams: centre them and keep them inside the pane. */
