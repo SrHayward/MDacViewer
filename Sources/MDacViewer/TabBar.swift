@@ -39,12 +39,14 @@ struct DocumentTabBar: View {
             }
         }
         .overlay(alignment: .top) {
-            // A hairline between the window toolbar and the strip. Without it
-            // the active tab can merge into the toolbar above (most visibly in
-            // dark mode, where both surfaces are grey), which reads as a bug.
+            // A clear separator between the window toolbar and the strip.
+            // A hairline was not enough: in light mode the white tab met the
+            // white toolbar, and in dark mode the dark tab met the dark
+            // toolbar, so the active tab still looked like it bled into the
+            // window chrome. Two pixels of contrast stop that.
             Rectangle()
                 .fill(palette.topBorder)
-                .frame(height: 1)
+                .frame(height: 2)
         }
     }
 
@@ -169,7 +171,7 @@ struct TabBarPalette {
             // as it does in light mode, where the tab is white.
             active = Color(red: 0.118, green: 0.118, blue: 0.118)
             divider = Color(red: 0.06, green: 0.06, blue: 0.06)
-            topBorder = Color(red: 0.04, green: 0.04, blue: 0.04)
+            topBorder = Color(red: 0.23, green: 0.23, blue: 0.23)
             bottomBorder = Color(red: 0.04, green: 0.04, blue: 0.04)
             inactiveText = Color(red: 0.62, green: 0.62, blue: 0.62)
             activeText = Color(red: 0.96, green: 0.96, blue: 0.96)
@@ -179,7 +181,7 @@ struct TabBarPalette {
             inactiveHover = Color(red: 0.92, green: 0.92, blue: 0.92)
             active = .white
             divider = Color(red: 0.73, green: 0.73, blue: 0.73)
-            topBorder = Color(red: 0.72, green: 0.72, blue: 0.72)
+            topBorder = Color(red: 0.68, green: 0.68, blue: 0.68)
             bottomBorder = Color(red: 0.69, green: 0.69, blue: 0.69)
             inactiveText = Color(red: 0.36, green: 0.36, blue: 0.36)
             activeText = Color(red: 0.09, green: 0.09, blue: 0.09)

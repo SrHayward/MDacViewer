@@ -268,8 +268,8 @@ The tab strip above the editor now follows Sublime Text's visual language:
 - the active tab uses the same background as the editor — white in light mode,
   `#1e1e1e` in dark mode — while inactive tabs sit on a contrasting grey and
   their labels are dimmed;
-- a hairline at the top separates the tab strip from the window toolbar, so the
-  active tab never looks like it bleeds up into the toolbar;
+- a 2 px separator at the top separates the tab strip from the window toolbar,
+  so the active tab never looks like it bleeds up into the toolbar;
 - the thin separators between tabs disappear next to the active tab, so it
   reads as one continuous surface with the editor below;
 - the close × appears only on the active tab or the tab under the pointer, as in
