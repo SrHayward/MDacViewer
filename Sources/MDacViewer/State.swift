@@ -29,16 +29,7 @@ enum ViewMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Compact title used by the toolbar's segmented picker.
-    var title: String {
-        switch self {
-        case .editorOnly: return "Editor"
-        case .split: return "Split"
-        case .previewOnly: return "Preview"
-        }
-    }
-
-    /// Spelled-out title used by the View menu.
+    /// Title used by the View menu and the toolbar popover.
     var menuTitle: String {
         switch self {
         case .editorOnly: return "Editor Only"
