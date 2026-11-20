@@ -8,7 +8,9 @@
 #   · switching tabs updates the editor and window title,
 #   · closing a tab disposes only that tab's model,
 #   · long code lines, URLs and wide tables wrap instead of scrolling
-#     sideways (the preview has no horizontal scrollbar).
+#     sideways (the preview has no horizontal scrollbar),
+#   · Editor Only / Split / Preview Only show the right pane(s) and the
+#     single-pane modes fill the content area without changing the window.
 #
 # Usage:  ./Scripts/verify-tabs-and-layout.sh
 # Exits 0 on pass, 1 on failure. Safe to re-run.

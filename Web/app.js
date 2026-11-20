@@ -42,10 +42,15 @@
     return clampPreviewFontSize(stored);
   }
 
+  function normalizeViewMode(mode) {
+    return (mode === 'editor' || mode === 'preview') ? mode : 'split';
+  }
+
   var state = {
     dark: localStorage.getItem(STORE_DARK) === 'true',
     sync: localStorage.getItem(STORE_SYNC) === 'true',
     previewFontSize: storedPreviewFontSize(),
+    viewMode: 'split',
     guardUntil: 0,
     adapter: null,
   };
@@ -216,6 +221,25 @@
     refreshPreviewMetrics();
   }
 
+  function applyViewMode(mode) {
+    state.viewMode = normalizeViewMode(mode);
+    document.documentElement.setAttribute('data-view-mode', state.viewMode);
+
+    // In Preview Only the editor is hidden but Monaco's textarea can still
+    // hold focus. Drop it so typing cannot change an invisible document.
+    if (state.viewMode === 'preview' && editorPane.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+
+    if (!state.adapter) { return; }
+    // Wait one frame so the pane visibility change has been laid out before
+    // Monaco and the preview scroll metrics recalculate.
+    requestAnimationFrame(function () {
+      state.adapter.layout();
+      refreshPreviewMetrics();
+    });
+  }
+
   // Cached scroll metrics. Reading scrollHeight forces a layout pass, so we
   // refresh these only when content/size actually changes — never inside the
   // scroll handler itself (that caused the preview to stutter during sync).
@@ -235,7 +259,8 @@
       syncFrame = null;
       var source = syncSource;
       syncSource = null;
-      if (!state.sync || !state.adapter) { return; }
+      // Sync scroll only has meaning while both panes are visible.
+      if (!state.sync || state.viewMode !== 'split' || !state.adapter) { return; }
 
       var now = Date.now();
       if (now < state.guardUntil) { return; }
@@ -444,6 +469,7 @@
 
     applyTheme(state.dark);
     applyPreviewFontSize(state.previewFontSize);
+    applyViewMode(state.viewMode);
 
     // The editor always starts empty — we deliberately do not restore any
     // previously typed text. The only exception is the very first launch,
@@ -522,6 +548,12 @@
       enabled = !!enabled;
       state.sync = enabled;
       try { localStorage.setItem(STORE_SYNC, String(enabled)); } catch (e) {}
+    },
+    setViewMode: function (mode) {
+      applyViewMode(mode);
+    },
+    getViewMode: function () {
+      return state.viewMode;
     },
     setPreviewFontSize: function (size) {
       applyPreviewFontSize(size);

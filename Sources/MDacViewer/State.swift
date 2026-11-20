@@ -20,12 +20,41 @@ struct DocumentTab: Identifiable, Equatable {
     var displayName: String { fileURL?.lastPathComponent ?? "Untitled" }
 }
 
+/// Which pane(s) the editor area shows. The window itself never changes size:
+/// the visible pane simply fills the space the split view would occupy.
+enum ViewMode: String, CaseIterable, Identifiable {
+    case editorOnly = "editor"
+    case split = "split"
+    case previewOnly = "preview"
+
+    var id: String { rawValue }
+
+    /// Compact title used by the toolbar's segmented picker.
+    var title: String {
+        switch self {
+        case .editorOnly: return "Editor"
+        case .split: return "Split"
+        case .previewOnly: return "Preview"
+        }
+    }
+
+    /// Spelled-out title used by the View menu.
+    var menuTitle: String {
+        switch self {
+        case .editorOnly: return "Editor Only"
+        case .split: return "Split"
+        case .previewOnly: return "Preview Only"
+        }
+    }
+}
+
 /// App-wide state, bridged between the native toolbar/menus and the web editor.
 final class AppState: ObservableObject {
     static let shared = AppState()
 
     private static let darkModeKey = "darkMode"
     private static let previewFontSizeKey = "previewFontSize"
+    private static let viewModeKey = "viewMode"
 
     static let minPreviewFontSize = 6
     static let maxPreviewFontSize = 72
@@ -35,6 +64,16 @@ final class AppState: ObservableObject {
     @Published var syncScroll = false
     @Published var windowTitle = "MDacViewer"
     @Published var showResetConfirm = false
+
+    /// Which pane(s) the editor area shows. Persisted so the last layout comes
+    /// back on the next launch, like the other view settings.
+    @Published var viewMode: ViewMode = .split {
+        didSet {
+            guard viewMode != oldValue else { return }
+            UserDefaults.standard.set(viewMode.rawValue, forKey: Self.viewModeKey)
+            web?.setViewMode(viewMode)
+        }
+    }
 
     /// The window's open documents, in tab order.
     @Published private(set) var tabs: [DocumentTab]
@@ -67,6 +106,10 @@ final class AppState: ObservableObject {
         previewFontSize = storedFontSize == 0
             ? Self.defaultPreviewFontSize
             : Self.clampedPreviewFontSize(storedFontSize)
+        if let storedMode = UserDefaults.standard.string(forKey: Self.viewModeKey),
+           let mode = ViewMode(rawValue: storedMode) {
+            viewMode = mode
+        }
         applyAppearance()
     }
 
@@ -173,6 +216,7 @@ final class AppState: ObservableObject {
         web?.setTheme(dark: darkMode)
         web?.setSyncScroll(enabled: syncScroll)
         web?.setPreviewFontSize(previewFontSize)
+        web?.setViewMode(viewMode)
         UserDefaults.standard.set(darkMode, forKey: Self.darkModeKey)
         applyAppearance()
     }

@@ -39,13 +39,29 @@ struct MainWindow: View {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 24) {
                         HStack(spacing: 8) {
+                            Text("View mode")
+                            Picker("View mode", selection: $app.viewMode) {
+                                ForEach(ViewMode.allCases) { mode in
+                                    Text(mode.title).tag(mode)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .controlSize(.small)
+                            .fixedSize()
+                        }
+                        .help("Show the editor, the preview, or both")
+
+                        HStack(spacing: 8) {
                             Text("Sync scroll")
                             Toggle("Sync scroll", isOn: $app.syncScroll)
                                 .labelsHidden()
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                         }
-                        .help("Keep the editor and preview scrolled together")
+                        .disabled(app.viewMode != .split)
+                        .opacity(app.viewMode == .split ? 1 : 0.45)
+                        .help("Keep the editor and preview scrolled together (Split view only)")
 
                         HStack(spacing: 8) {
                             Text("Dark mode")

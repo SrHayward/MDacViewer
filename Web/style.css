@@ -19,6 +19,22 @@ html[data-theme="dark"] body { background: #22272e; }
   width: 100vw;
 }
 
+/* View modes: show one pane, or both. The !important on flex overrides the
+ * inline width the divider drag writes to the editor pane, so the focused pane
+ * fills the window. The inline split width stays in place, ready for when
+ * Split is selected again. */
+html[data-view-mode="editor"] #preview-pane,
+html[data-view-mode="editor"] #divider,
+html[data-view-mode="preview"] #editor-pane,
+html[data-view-mode="preview"] #divider {
+  display: none;
+}
+
+html[data-view-mode="editor"] #editor-pane,
+html[data-view-mode="preview"] #preview-pane {
+  flex: 1 1 100% !important;
+}
+
 #editor-pane {
   position: relative;
   flex: 1 1 50%;

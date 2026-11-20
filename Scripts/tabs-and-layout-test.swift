@@ -8,6 +8,8 @@
 //   3. Closing a tab removes its model without disturbing the others.
 //   4. Long code lines, URLs and wide tables wrap instead of creating a
 //      horizontal scrollbar in the preview.
+//   5. Editor Only and Preview Only hide the other pane and fill the content
+//      area, and Split restores the dragged divider width.
 
 import AppKit
 import WebKit
@@ -68,6 +70,11 @@ struct TabsAndLayoutTest {
 
     static func number(_ javaScript: String) -> Double? {
         (evaluate(javaScript) as? NSNumber)?.doubleValue
+    }
+
+    static func isPaneVisible(_ id: String) -> Bool {
+        evaluate("getComputedStyle(document.getElementById('\(id)')).display !== 'none'",
+                 timeout: 2) as? Bool == true
     }
 
     @discardableResult
@@ -298,6 +305,80 @@ struct TabsAndLayoutTest {
         checkFits(inlineFits, "a long URL wraps rather than widening the pane")
     }
 
+    static func testViewModes() {
+        print("→ View modes focus one pane without changing the window")
+        let app = AppState.shared
+        let contentWidth = number("document.getElementById('split').clientWidth") ?? 0
+
+        app.viewMode = .split
+        waitFor("Split to show both panes", timeout: 5) {
+            isPaneVisible("editor-pane")
+                && isPaneVisible("preview-pane")
+                && isPaneVisible("divider")
+        }
+        checkEqual(string("window.mdac.getViewMode()"), "split",
+                   "the web layer starts in Split")
+
+        // Pretend the divider was dragged to a 620 px editor pane. Switching
+        // to a single pane must ignore this inline width, then restore it when
+        // Split comes back.
+        evaluate("""
+        (function () {
+          document.getElementById('editor-pane').style.flex = '0 0 620px';
+          document.getElementById('preview-pane').style.flex = '1 1 auto';
+        })()
+        """)
+        runLoop(for: 0.1)
+        check(abs((number("document.getElementById('editor-pane').getBoundingClientRect().width") ?? 0) - 620) <= 1,
+              "the simulated divider drag gives the editor a 620 px split width")
+
+        app.viewMode = .editorOnly
+        waitFor("Editor Only to hide the preview and divider", timeout: 5) {
+            isPaneVisible("editor-pane")
+                && !isPaneVisible("preview-pane")
+                && !isPaneVisible("divider")
+        }
+        checkEqual(string("window.mdac.getViewMode()"), "editor",
+                   "the bridge sets Editor Only in the web layer")
+        let editorWidth = number("document.getElementById('editor-pane').getBoundingClientRect().width") ?? 0
+        check(abs(editorWidth - contentWidth) <= 1,
+              "the editor fills the content area in Editor Only (got \(editorWidth) of \(contentWidth) px)")
+
+        app.viewMode = .split
+        waitFor("Split to restore the dragged editor width", timeout: 5) {
+            abs((number("document.getElementById('editor-pane').getBoundingClientRect().width") ?? 0) - 620) <= 1
+        }
+        check(isPaneVisible("preview-pane") && isPaneVisible("divider"),
+              "Split restores the preview and divider")
+
+        app.viewMode = .previewOnly
+        waitFor("Preview Only to hide the editor and divider", timeout: 5) {
+            !isPaneVisible("editor-pane")
+                && isPaneVisible("preview-pane")
+                && !isPaneVisible("divider")
+        }
+        checkEqual(string("window.mdac.getViewMode()"), "preview",
+                   "the bridge sets Preview Only in the web layer")
+        let previewWidth = number("document.getElementById('preview-pane').getBoundingClientRect().width") ?? 0
+        check(abs(previewWidth - contentWidth) <= 1,
+              "the preview fills the content area in Preview Only (got \(previewWidth) of \(contentWidth) px)")
+
+        app.viewMode = .split
+        waitFor("Split to come back after Preview Only", timeout: 5) {
+            isPaneVisible("editor-pane") && isPaneVisible("preview-pane") && isPaneVisible("divider")
+        }
+        check(abs((number("document.getElementById('editor-pane').getBoundingClientRect().width") ?? 0) - 620) <= 1,
+              "the dragged split width survives a round trip through Preview Only")
+
+        // Leave the page in its default split layout for any later checks.
+        evaluate("""
+        (function () {
+          document.getElementById('editor-pane').style.flex = '';
+          document.getElementById('preview-pane').style.flex = '';
+        })()
+        """)
+    }
+
     static func main() {
         let nsapp = NSApplication.shared
         nsapp.setActivationPolicy(.accessory)
@@ -311,9 +392,11 @@ struct TabsAndLayoutTest {
         controller.markReady()
         let app = AppState.shared
         app.webReady(dark: false, sync: false, previewFontSize: 16)
+        app.viewMode = .split
 
         testTabs()
         testPreviewWidth()
+        testViewModes()
 
         print()
         if failures == 0 {

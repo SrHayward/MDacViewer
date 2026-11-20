@@ -21,12 +21,13 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 - **Multiple tabs** — keep several documents open in one window (⌘T opens a tab, ⌘W closes it); each tab keeps its own text, undo history and scroll position, the active tab is clearly highlighted in a Sublime-style strip, drag a tab to reorder the strip, and a dot marks unsaved work (tabs are per-session, so a fresh launch still starts empty)
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text — opening several files at once (or from Finder) gives each its own tab
 - **Unsaved-changes guard** — an asterisk in the title marks any unsaved edit in the current tab, including text typed in a fresh session (⌘S saves and clears it), and closing a tab, the window or quitting (⌘Q) asks Save / Don't Save / Cancel first — for every edited tab
-- **Sync scroll** — the editor and preview scroll together (toggleable)
+- **Sync scroll** — the editor and preview scroll together (toggleable; available in Split view)
+- **View modes** — focus on the raw editor, the rendered preview, or keep both side by side; switch from the toolbar or with ⌘1 / ⌘2 / ⌘3 (remembered between launches; the window size never changes)
 - **Preview text size** — resize just the rendered preview from 6 px to 72 px, from the toolbar or with ⌘+ / ⌘− / ⌘0 (remembered between launches)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the current tab's editor, behind an “Are you sure?” confirmation
 - **Copy** — copies the current tab's full Markdown source to the clipboard; text selected in the preview copies as **plain text**, so it pastes cleanly into Claude, Notes and other rich-text apps (no grey code-block boxes)
-- **Settings memory** — your dark-mode, sync-scroll and preview text-size settings come back when you reopen the app
+- **Settings memory** — your dark-mode, sync-scroll, preview text-size and view-mode settings come back when you reopen the app
 - **GitHub-flavoured Markdown** — tables, strikethrough, nested lists, blockquotes and more
 - **Mermaid diagrams** — <code>```mermaid</code> blocks render as live diagrams
 - **Open from Finder** — double-click a `.md` file (or drag it onto the app) to open it
@@ -61,6 +62,9 @@ After that it launches like any other app.
 | ⌘S | Save — back to the opened file, or ask where to save pasted text |
 | ⇧⌘S | Save As |
 | ⇧⌘C | Copy the **full** Markdown source |
+| ⌘1 | Show the editor only |
+| ⌘2 | Show the split editor + preview |
+| ⌘3 | Show the preview only |
 | ⌘+ / ⌘− | Increase / decrease the preview text size |
 | ⌘0 | Reset the preview text size to 16 px |
 | ⌘C / ⌘V | Copy / paste the selected text as usual |
