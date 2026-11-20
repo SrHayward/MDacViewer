@@ -50,6 +50,13 @@ struct MDacViewerApp: App {
 
             CommandGroup(after: .toolbar) {
                 Divider()
+                Toggle(ViewMode.editorOnly.menuTitle, isOn: viewModeBinding(.editorOnly))
+                    .keyboardShortcut("1", modifiers: .command)
+                Toggle(ViewMode.split.menuTitle, isOn: viewModeBinding(.split))
+                    .keyboardShortcut("2", modifiers: .command)
+                Toggle(ViewMode.previewOnly.menuTitle, isOn: viewModeBinding(.previewOnly))
+                    .keyboardShortcut("3", modifiers: .command)
+                Divider()
                 Button("Increase Preview Text Size") { app.increasePreviewFontSize() }
                     .keyboardShortcut("+", modifiers: .command)
                 Button("Decrease Preview Text Size") { app.decreasePreviewFontSize() }
@@ -65,6 +72,17 @@ struct MDacViewerApp: App {
         .windowResizability(.contentSize)
         .defaultPosition(.center)
         .commandsRemoved()
+    }
+
+    /// Menu-item binding for a mutually exclusive view mode: selecting the
+    /// checked item must not turn the layout off, so only `true` is applied.
+    private func viewModeBinding(_ mode: ViewMode) -> Binding<Bool> {
+        Binding(
+            get: { app.viewMode == mode },
+            set: { isOn in
+                if isOn { app.viewMode = mode }
+            }
+        )
     }
 }
 

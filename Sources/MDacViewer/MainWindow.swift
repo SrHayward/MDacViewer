@@ -4,6 +4,7 @@ struct MainWindow: View {
     @EnvironmentObject var app: AppState
     @ObservedObject private var updates = UpdateChecker.shared
     @State private var showingTextSize = false
+    @State private var showingViewMode = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -45,7 +46,9 @@ struct MainWindow: View {
                                 .toggleStyle(.switch)
                                 .controlSize(.small)
                         }
-                        .help("Keep the editor and preview scrolled together")
+                        .disabled(app.viewMode != .split)
+                        .opacity(app.viewMode == .split ? 1 : 0.45)
+                        .help("Keep the editor and preview scrolled together (Split view only)")
 
                         HStack(spacing: 8) {
                             Text("Dark mode")
@@ -55,6 +58,15 @@ struct MainWindow: View {
                                 .controlSize(.small)
                         }
                         .help("Switch between light and dark appearance")
+
+                        Button { showingViewMode.toggle() } label: {
+                            Image(systemName: "rectangle.split.2x1")
+                        }
+                        .help("View mode: \(app.viewMode.menuTitle) (⌘1 / ⌘2 / ⌘3)")
+                        .accessibilityLabel("View mode")
+                        .popover(isPresented: $showingViewMode, arrowEdge: .bottom) {
+                            ViewModePopover(app: app, isPresented: $showingViewMode)
+                        }
 
                         Button { showingTextSize.toggle() } label: {
                             Image(systemName: "textformat.size")
@@ -158,5 +170,94 @@ private struct PreviewTextSizePopover: View {
         }
         .padding(16)
         .frame(width: 320)
+    }
+}
+
+/// Toolbar popover for choosing which pane(s) the editor area shows.
+private struct ViewModePopover: View {
+    @ObservedObject var app: AppState
+    @Binding var isPresented: Bool
+    @State private var hovering: ViewMode?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("View mode")
+                .font(.headline)
+
+            VStack(spacing: 2) {
+                ForEach(ViewMode.allCases) { mode in
+                    Button {
+                        app.viewMode = mode
+                        isPresented = false
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Color.accentColor)
+                                .frame(width: 14)
+                                .opacity(app.viewMode == mode ? 1 : 0)
+
+                            Image(systemName: mode.symbolName)
+                                .font(.system(size: 13))
+                                .foregroundStyle(app.viewMode == mode
+                                                 ? Color.accentColor
+                                                 : Color.secondary)
+                                .frame(width: 22)
+
+                            Text(mode.menuTitle)
+                                .font(.system(size: 13))
+
+                            Spacer(minLength: 12)
+
+                            Text(mode.shortcutLabel)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 7)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 7)
+                                .fill(rowBackground(for: mode))
+                        )
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { inside in
+                        if inside {
+                            hovering = mode
+                        } else if hovering == mode {
+                            hovering = nil
+                        }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(width: 250)
+    }
+
+    private func rowBackground(for mode: ViewMode) -> Color {
+        if app.viewMode == mode { return Color.accentColor.opacity(0.16) }
+        if hovering == mode { return Color.primary.opacity(0.07) }
+        return .clear
+    }
+}
+
+private extension ViewMode {
+    var symbolName: String {
+        switch self {
+        case .editorOnly: return "chevron.left.forwardslash.chevron.right"
+        case .split: return "rectangle.split.2x1"
+        case .previewOnly: return "eye"
+        }
+    }
+
+    var shortcutLabel: String {
+        switch self {
+        case .editorOnly: return "⌘1"
+        case .split: return "⌘2"
+        case .previewOnly: return "⌘3"
+        }
     }
 }

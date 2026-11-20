@@ -92,6 +92,14 @@ final class WebController {
         }
     }
 
+    func setViewMode(_ mode: ViewMode) {
+        enqueue { [weak self] in
+            self?.evaluate(
+                "window.mdac && window.mdac.setViewMode(\(WebController.jsString(mode.rawValue)))"
+            )
+        }
+    }
+
     func reset() {
         enqueue { [weak self] in
             self?.evaluate("window.mdac && window.mdac.resetEditor()")

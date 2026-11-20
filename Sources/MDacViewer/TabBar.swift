@@ -133,7 +133,7 @@ private struct TabButton: View {
         .padding(.trailing, 7)
         .frame(height: TabBarPalette.tabHeight)
         .frame(minWidth: 100, maxWidth: 220)
-        .background(background)
+        .background(TabShape().fill(background))
         .overlay(alignment: .leading) {
             if showsLeadingDivider {
                 Rectangle()
@@ -229,6 +229,31 @@ private struct NewTabButton: View {
         .onHover { hovering = $0 }
         .help("New tab (⌘T)")
         .accessibilityLabel("New tab")
+    }
+}
+
+/// A tab silhouette with gently rounded top corners. The bottom stays square
+/// so the active tab still joins the editor surface without a visible seam.
+private struct TabShape: Shape {
+    var radius: CGFloat = 4
+
+    func path(in rect: CGRect) -> Path {
+        let radius = min(radius, rect.width / 2, rect.height / 2)
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX + radius, y: rect.minY),
+            control: CGPoint(x: rect.minX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.minY + radius),
+            control: CGPoint(x: rect.maxX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 
