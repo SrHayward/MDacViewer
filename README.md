@@ -18,7 +18,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 - **Live preview** — renders as you type; no file or save needed
 - **Width-safe preview** — long code lines, URLs and wide tables wrap to fit the pane, so the preview never shows a horizontal scrollbar
-- **Multiple tabs** — keep several documents open in one window (⌘T opens a tab, ⌘W closes it); each tab keeps its own text, undo history and scroll position, the active tab is clearly highlighted in a Sublime-style strip, and a dot marks unsaved work (tabs are per-session, so a fresh launch still starts empty)
+- **Multiple tabs** — keep several documents open in one window (⌘T opens a tab, ⌘W closes it); each tab keeps its own text, undo history and scroll position, the active tab is clearly highlighted in a Sublime-style strip, drag a tab to reorder the strip, and a dot marks unsaved work (tabs are per-session, so a fresh launch still starts empty)
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text — opening several files at once (or from Finder) gives each its own tab
 - **Unsaved-changes guard** — an asterisk in the title marks any unsaved edit in the current tab, including text typed in a fresh session (⌘S saves and clears it), and closing a tab, the window or quitting (⌘Q) asks Save / Don't Save / Cancel first — for every edited tab
 - **Sync scroll** — the editor and preview scroll together (toggleable)

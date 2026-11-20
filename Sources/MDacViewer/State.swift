@@ -108,6 +108,16 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Reorders the tab strip after a drag. The selected tab and every tab's
+    /// web editor model are untouched — only the strip order changes.
+    func moveTab(from source: Int, to destination: Int) {
+        guard source != destination,
+              tabs.indices.contains(source),
+              tabs.indices.contains(destination) else { return }
+        tabs.move(fromOffsets: IndexSet(integer: source),
+                  toOffset: destination > source ? destination + 1 : destination)
+    }
+
     /// Closes a tab, asking about unsaved changes first. The window always
     /// keeps at least one (empty) tab.
     func closeTab(_ id: UUID) {

@@ -7,6 +7,8 @@ import AppKit
 /// hovered tab.
 struct DocumentTabBar: View {
     @ObservedObject var app: AppState
+    @State private var draggingTabID: UUID?
+    @State private var dropTargetID: UUID?
 
     private var palette: TabBarPalette { TabBarPalette(dark: app.darkMode) }
 
@@ -18,7 +20,9 @@ struct DocumentTabBar: View {
                         app: app,
                         tab: tab,
                         palette: palette,
-                        showsLeadingDivider: showsDivider(before: index)
+                        showsLeadingDivider: showsDivider(before: index),
+                        draggingTabID: $draggingTabID,
+                        dropTargetID: $dropTargetID
                     )
                 }
 
@@ -69,11 +73,28 @@ private struct TabButton: View {
     let tab: DocumentTab
     let palette: TabBarPalette
     let showsLeadingDivider: Bool
+    @Binding var draggingTabID: UUID?
+    @Binding var dropTargetID: UUID?
 
     @State private var hovering = false
 
     private var isSelected: Bool { app.selectedTabID == tab.id }
     private var showsCloseButton: Bool { isSelected || hovering }
+    private var showsDropIndicator: Bool {
+        dropTargetID == tab.id && draggingTabID != nil && draggingTabID != tab.id
+    }
+
+    /// Whether the dragged tab is coming from the left. The indicator sits on
+    /// the trailing edge for a rightward drag and the leading edge for a
+    /// leftward one, matching where the tab will land.
+    private var dropsAfter: Bool {
+        guard let draggingTabID,
+              let source = app.tabs.firstIndex(where: { $0.id == draggingTabID }),
+              let target = app.tabs.firstIndex(where: { $0.id == tab.id }) else {
+            return false
+        }
+        return source < target
+    }
 
     private var background: Color {
         if isSelected { return palette.active }
@@ -124,6 +145,68 @@ private struct TabButton: View {
         .onTapGesture { app.selectTab(tab.id) }
         .onHover { hovering = $0 }
         .help(tab.fileURL?.path ?? tab.displayName)
+        .onDrag {
+            draggingTabID = tab.id
+            dropTargetID = nil
+            return NSItemProvider(object: tab.id.uuidString as NSString)
+        }
+        .onDrop(of: [.text], delegate: TabDropDelegate(
+            targetID: tab.id,
+            draggingTabID: $draggingTabID,
+            dropTargetID: $dropTargetID,
+            app: app
+        ))
+        .overlay {
+            if showsDropIndicator {
+                HStack(spacing: 0) {
+                    if dropsAfter { Spacer(minLength: 0) }
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(width: 2)
+                    if !dropsAfter { Spacer(minLength: 0) }
+                }
+                .allowsHitTesting(false)
+            }
+        }
+    }
+}
+
+/// Accepts a dragged tab and reorders the strip when it is dropped. The
+/// indicator is shown in `TabButton` while `dropTargetID` points at it.
+private struct TabDropDelegate: DropDelegate {
+    let targetID: UUID
+    @Binding var draggingTabID: UUID?
+    @Binding var dropTargetID: UUID?
+    let app: AppState
+
+    func dropEntered(info: DropInfo) {
+        guard draggingTabID != nil else { return }
+        dropTargetID = targetID
+    }
+
+    func dropExited(info: DropInfo) {
+        if dropTargetID == targetID { dropTargetID = nil }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        defer {
+            draggingTabID = nil
+            dropTargetID = nil
+        }
+        guard let draggedID = draggingTabID,
+              draggedID != targetID,
+              let source = app.tabs.firstIndex(where: { $0.id == draggedID }),
+              let destination = app.tabs.firstIndex(where: { $0.id == targetID })
+        else { return false }
+
+        withAnimation(.easeInOut(duration: 0.15)) {
+            app.moveTab(from: source, to: destination)
+        }
+        return true
     }
 }
 
@@ -150,9 +233,10 @@ private struct NewTabButton: View {
 }
 
 /// Colours for the Sublime-style tab strip. Light mode mirrors Sublime's
-/// default light theme exactly (grey strip, dimmed tabs, white active tab);
-/// dark mode keeps the same relationship — active lightest, inactive dimmed,
-/// strip darkest — so the active tab is obvious in both appearances.
+/// default light theme (grey strip, dimmed tabs, white active tab). In dark
+/// mode the active tab uses the editor's background, while inactive tabs are a
+/// clearly lighter grey so the selected tab reads as the dark notch connected
+/// to the content below.
 struct TabBarPalette {
     /// Height of one tab.
     static let tabHeight: CGFloat = 32
@@ -174,8 +258,8 @@ struct TabBarPalette {
     init(dark: Bool) {
         if dark {
             strip = Color(red: 0.09, green: 0.09, blue: 0.09)
-            inactive = Color(red: 0.17, green: 0.17, blue: 0.17)
-            inactiveHover = Color(red: 0.21, green: 0.21, blue: 0.21)
+            inactive = Color(red: 0.25, green: 0.25, blue: 0.25)
+            inactiveHover = Color(red: 0.30, green: 0.30, blue: 0.30)
             // The active tab uses the editor's own background (#1e1e1e), so it
             // reads as one continuous surface with the content below — exactly
             // as it does in light mode, where the tab is white.
@@ -183,7 +267,7 @@ struct TabBarPalette {
             divider = Color(red: 0.06, green: 0.06, blue: 0.06)
             topBorder = Color(red: 0.23, green: 0.23, blue: 0.23)
             bottomBorder = Color(red: 0.04, green: 0.04, blue: 0.04)
-            inactiveText = Color(red: 0.62, green: 0.62, blue: 0.62)
+            inactiveText = Color(red: 0.72, green: 0.72, blue: 0.72)
             activeText = Color(red: 0.96, green: 0.96, blue: 0.96)
         } else {
             strip = Color(red: 0.80, green: 0.80, blue: 0.80)

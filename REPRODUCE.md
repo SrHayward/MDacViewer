@@ -266,8 +266,8 @@ The tab strip above the editor now follows Sublime Text's visual language:
 
 - flat, square tabs instead of rounded pills;
 - the active tab uses the same background as the editor — white in light mode,
-  `#1e1e1e` in dark mode — while inactive tabs sit on a contrasting grey and
-  their labels are dimmed;
+  `#1e1e1e` in dark mode — while inactive tabs sit on a contrasting grey (and a
+  clearly lighter grey in dark mode) with dimmed labels;
 - a 2 px separator at the top separates the tab strip from the window toolbar,
   and the tabs are inset from the top so the window controls' glass capsule
   cannot overlap the first tab;
@@ -278,15 +278,17 @@ The tab strip above the editor now follows Sublime Text's visual language:
 - the **+** button sits immediately after the last tab, where it was before,
   instead of being parked at the far right of the strip.
 
-The tab strip is a fixed 32 px high, with the same tab order, ⌘T / ⌘W
-behaviour, dirty dots and save prompts as before — only the look changed.
+The tabs themselves are 32 px high, with a 6 px strip-coloured inset above the
+row so the window controls cannot overlap them. Tab order, ⌘T / ⌘W behaviour,
+dirty dots and save prompts are unchanged.
 
 ### How to verify this manually on a Mac
 
 1. Open two or three Markdown files so several tabs are visible.
-2. Click between the tabs. The active tab should be unmistakable in both light
-   and dark mode: bright surface, full-strength label and a visible ×; the
-   others are dimmed and have no × until hovered.
+2. Click between the tabs. In light mode the active tab is the white surface;
+   in dark mode it is the dark surface connected to the editor. In both modes
+   it has a full-strength label and a visible ×, while the inactive tabs are a
+   contrasting grey with dimmed labels and no × until hovered.
 3. Type in a tab to make it dirty: the dot still appears on its tab (and on
    hidden tabs), and the title asterisk still works.
 4. Hover an inactive tab: it lightens slightly and its × fades in.
@@ -297,4 +299,31 @@ Automated check: `./Scripts/verify-tabs-and-layout.sh` still covers the
 functional side — independent tab text, switching, dirty state, closing and
 model disposal — and must keep passing. The tab styling itself is visual and is
 confirmed by eye in both appearances.
+
+## Feature: drag tabs to reorder
+
+### What it does
+
+Drag any tab left or right and drop it on another tab to move it there. A thin
+accent-coloured insertion line shows where it will land: on the trailing edge
+when dragging right, on the leading edge when dragging left. The selected tab
+stays selected, and its title and editor model are untouched — only the strip
+order changes. The **+** button stays immediately after the last tab.
+
+### How to verify this manually on a Mac
+
+1. Open at least three Markdown files.
+2. Drag the first tab onto the third. It moves after the third, and the
+   insertion line appears on the third tab's trailing edge.
+3. Drag it back to the left. It moves before the target, with the insertion
+   line on the leading edge.
+4. Confirm the active tab stayed active and that typing still edits the same
+   document.
+
+Automated check: `./Scripts/verify-tabs-and-layout.sh` drives the native
+`AppState.moveTab(from:to:)` reorder and asserts that the strip order changes
+while the selected tab, window title and web editor model stay put. The drag
+gesture itself is native SwiftUI drag-and-drop and was verified by dragging
+tabs in the running app.
+
 
