@@ -222,3 +222,75 @@ independent tab text, tab switching, dirty state and model disposal. It also
 renders a long code line, a long URL and a wide table and asserts that neither
 the preview pane nor any of those elements overflows horizontally. It needs a
 logged-in Mac desktop session but no Accessibility permission.
+
+## Bug fix: copying from the preview pasted a styled "box"
+
+### What the app used to do wrong, and why
+
+Selecting text in the rendered preview and pressing ⌘C put **two** things on the
+clipboard: the plain text and a rich `text/html` version of the selection.
+WebKit builds that HTML from the preview's CSS, so a copied code block carried
+its grey background with it. Rich-text destinations — Claude, Notes, Word —
+prefer the HTML, which is why pasting produced a grey box around the words
+instead of plain text.
+
+### What it does now
+
+Copying anywhere inside the preview writes **only** `text/plain` to the
+clipboard. Paragraphs, lists, code blocks and tables keep their words, line
+breaks and table tabs, but every bit of preview styling is dropped. Copying in
+the editor is untouched: Monaco still handles its own copy as usual.
+
+### How to verify this manually on a Mac
+
+1. Open a Markdown file with a fenced code block, such as the built-in sample.
+2. Select a paragraph or the contents of a code block in the preview and press
+   ⌘C.
+3. Paste into Claude, Notes, TextEdit or another rich-text app. The text appears
+   as plain text — no grey box, no background colour.
+4. Click into the editor, select some source text and press ⌘C. It still copies
+   normally (Monaco's own copy path).
+
+Automated check: `./Scripts/verify-preview-copy.sh` loads the real `Web/` app in
+a WKWebView, selects a code block, a paragraph, a table and the whole preview,
+and dispatches a copy event. It asserts that `text/plain` contains the expected
+words and that `text/html` is empty; it also checks that copying in the editor
+is not intercepted. It needs a logged-in Mac desktop session but no
+Accessibility permission.
+
+## Feature: Sublime-style tabs
+
+### What it does
+
+The tab strip above the editor now follows Sublime Text's visual language:
+
+- flat, square tabs instead of rounded pills;
+- the active tab is the lightest surface in light mode (white, matching the
+  editor) and the lightest grey in dark mode, while inactive tabs are dimmed;
+- inactive tab labels are muted, the active label is full-strength;
+- the thin separators between tabs disappear next to the active tab, so it
+  reads as one continuous surface with the editor below;
+- the close × appears only on the active tab or the tab under the pointer, as in
+  Sublime — inactive tabs stay uncluttered, with the unsaved dot still visible;
+- the **+** button stays at the right-hand end of the strip.
+
+The tab strip is a fixed 32 px high, with the same tab order, ⌘T / ⌘W
+behaviour, dirty dots and save prompts as before — only the look changed.
+
+### How to verify this manually on a Mac
+
+1. Open two or three Markdown files so several tabs are visible.
+2. Click between the tabs. The active tab should be unmistakable in both light
+   and dark mode: bright surface, full-strength label and a visible ×; the
+   others are dimmed and have no × until hovered.
+3. Type in a tab to make it dirty: the dot still appears on its tab (and on
+   hidden tabs), and the title asterisk still works.
+4. Hover an inactive tab: it lightens slightly and its × fades in.
+5. Check that the active tab still merges into the editor below it (no divider
+   line under the selected tab).
+
+Automated check: `./Scripts/verify-tabs-and-layout.sh` still covers the
+functional side — independent tab text, switching, dirty state, closing and
+model disposal — and must keep passing. The tab styling itself is visual and is
+confirmed by eye in both appearances.
+

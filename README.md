@@ -18,14 +18,14 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 - **Live preview** — renders as you type; no file or save needed
 - **Width-safe preview** — long code lines, URLs and wide tables wrap to fit the pane, so the preview never shows a horizontal scrollbar
-- **Multiple tabs** — keep several documents open in one window (⌘T opens a tab, ⌘W closes it); each tab keeps its own text, undo history and scroll position, and a dot marks unsaved work (tabs are per-session, so a fresh launch still starts empty)
+- **Multiple tabs** — keep several documents open in one window (⌘T opens a tab, ⌘W closes it); each tab keeps its own text, undo history and scroll position, the active tab is clearly highlighted in a Sublime-style strip, and a dot marks unsaved work (tabs are per-session, so a fresh launch still starts empty)
 - **Open & save `.md` files** (⌘O / ⌘S), or just work with pasted text — opening several files at once (or from Finder) gives each its own tab
 - **Unsaved-changes guard** — an asterisk in the title marks any unsaved edit in the current tab, including text typed in a fresh session (⌘S saves and clears it), and closing a tab, the window or quitting (⌘Q) asks Save / Don't Save / Cancel first — for every edited tab
 - **Sync scroll** — the editor and preview scroll together (toggleable)
 - **Preview text size** — resize just the rendered preview from 6 px to 72 px, from the toolbar or with ⌘+ / ⌘− / ⌘0 (remembered between launches)
 - **Dark mode** — switches the **entire app** between light and dark: window, toolbar and both panes (toggleable)
 - **Reset** — clears the current tab's editor, behind an “Are you sure?” confirmation
-- **Copy** — copies the current tab's full Markdown source to the clipboard
+- **Copy** — copies the current tab's full Markdown source to the clipboard; text selected in the preview copies as **plain text**, so it pastes cleanly into Claude, Notes and other rich-text apps (no grey code-block boxes)
 - **Settings memory** — your dark-mode, sync-scroll and preview text-size settings come back when you reopen the app
 - **GitHub-flavoured Markdown** — tables, strikethrough, nested lists, blockquotes and more
 - **Mermaid diagrams** — <code>```mermaid</code> blocks render as live diagrams
@@ -36,7 +36,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 
 ## Download & install
 
-1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.1.0.dmg` (or newer).
+1. Go to the [**Releases page**](https://github.com/SrHayward/MDacViewer/releases/latest) and download `MDacViewer-1.1.1.dmg` (or newer).
 2. Open the DMG and drag **MDacViewer** into your **Applications** folder.
 3. Launch it from Applications or Spotlight.
 
@@ -85,7 +85,7 @@ Requirements: an Apple Silicon Mac with either Xcode **or** just the Command Lin
 git clone https://github.com/SrHayward/MDacViewer.git
 cd MDacViewer
 make run      # builds MDacViewer.app and launches it
-make dmg      # creates dist/MDacViewer-1.1.0.dmg (drag-to-install)
+make dmg      # creates dist/MDacViewer-1.1.1.dmg (drag-to-install)
 ```
 
 | Command | What it does |
@@ -103,7 +103,7 @@ The rendering libraries in `Web/vendor/` are pinned and committed, so a fresh cl
 
 ## Releases & versioning
 
-Releases are fully automated with GitHub Actions. When a version tag such as `v1.1.0` is pushed, a GitHub-hosted Apple Silicon Mac builds the app, packages it into a DMG and publishes it on the [Releases page](https://github.com/SrHayward/MDacViewer/releases) — so every release is reproducible from source.
+Releases are fully automated with GitHub Actions. When a version tag such as `v1.1.1` is pushed, a GitHub-hosted Apple Silicon Mac builds the app, packages it into a DMG and publishes it on the [Releases page](https://github.com/SrHayward/MDacViewer/releases) — so every release is reproducible from source.
 
 ## Credits & license
 
