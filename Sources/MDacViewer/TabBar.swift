@@ -11,25 +11,30 @@ struct DocumentTabBar: View {
     private var palette: TabBarPalette { TabBarPalette(dark: app.darkMode) }
 
     var body: some View {
-        HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 0) {
-                    ForEach(Array(app.tabs.enumerated()), id: \.element.id) { index, tab in
-                        TabButton(
-                            app: app,
-                            tab: tab,
-                            palette: palette,
-                            showsLeadingDivider: showsDivider(before: index)
-                        )
-                    }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(Array(app.tabs.enumerated()), id: \.element.id) { index, tab in
+                    TabButton(
+                        app: app,
+                        tab: tab,
+                        palette: palette,
+                        showsLeadingDivider: showsDivider(before: index)
+                    )
                 }
-                .padding(.leading, 6)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
-            NewTabButton(palette: palette) { app.newTab() }
+                NewTabButton(palette: palette) { app.newTab() }
+                    .padding(.leading, 4)
+            }
+            .padding(.leading, 6)
         }
-        .frame(height: TabBarPalette.height)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: TabBarPalette.tabHeight, alignment: .bottom)
+        // The window controls' glass capsule floats over the top of the
+        // content view. Without this inset the first tab starts underneath it
+        // (and its shadow), which makes the tab look like it bleeds into the
+        // titlebar. The strip colour fills the inset.
+        .padding(.top, TabBarPalette.topInset)
+        .frame(height: TabBarPalette.height, alignment: .bottom)
         .background(alignment: .bottom) {
             ZStack(alignment: .bottom) {
                 palette.strip
@@ -105,7 +110,7 @@ private struct TabButton: View {
         }
         .padding(.leading, 12)
         .padding(.trailing, 7)
-        .frame(height: TabBarPalette.height)
+        .frame(height: TabBarPalette.tabHeight)
         .frame(minWidth: 100, maxWidth: 220)
         .background(background)
         .overlay(alignment: .leading) {
@@ -133,7 +138,7 @@ private struct NewTabButton: View {
             Image(systemName: "plus")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(palette.inactiveText)
-                .frame(width: 30, height: TabBarPalette.height)
+                .frame(width: 30, height: TabBarPalette.tabHeight)
                 .background(hovering ? palette.inactiveHover : Color.clear)
                 .contentShape(Rectangle())
         }
@@ -149,7 +154,12 @@ private struct NewTabButton: View {
 /// dark mode keeps the same relationship — active lightest, inactive dimmed,
 /// strip darkest — so the active tab is obvious in both appearances.
 struct TabBarPalette {
-    static let height: CGFloat = 32
+    /// Height of one tab.
+    static let tabHeight: CGFloat = 32
+    /// Strip-coloured breathing room above the tabs, below the window controls.
+    static let topInset: CGFloat = 6
+    /// Full height of the strip (tab + inset).
+    static let height: CGFloat = tabHeight + topInset
 
     let strip: Color
     let inactive: Color

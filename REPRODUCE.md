@@ -269,12 +269,14 @@ The tab strip above the editor now follows Sublime Text's visual language:
   `#1e1e1e` in dark mode — while inactive tabs sit on a contrasting grey and
   their labels are dimmed;
 - a 2 px separator at the top separates the tab strip from the window toolbar,
-  so the active tab never looks like it bleeds up into the toolbar;
+  and the tabs are inset from the top so the window controls' glass capsule
+  cannot overlap the first tab;
 - the thin separators between tabs disappear next to the active tab, so it
   reads as one continuous surface with the editor below;
 - the close × appears only on the active tab or the tab under the pointer, as in
   Sublime — inactive tabs stay uncluttered, with the unsaved dot still visible;
-- the **+** button stays at the right-hand end of the strip.
+- the **+** button sits immediately after the last tab, where it was before,
+  instead of being parked at the far right of the strip.
 
 The tab strip is a fixed 32 px high, with the same tab order, ⌘T / ⌘W
 behaviour, dirty dots and save prompts as before — only the look changed.
