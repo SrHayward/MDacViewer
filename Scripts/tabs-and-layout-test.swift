@@ -180,6 +180,22 @@ struct TabsAndLayoutTest {
         check(string("window.mdac.getText()")?.contains("first tab text") == true,
               "the editor shows the first tab's text after switching")
 
+        // Drag-and-drop reordering: moveTab reorders the strip without changing
+        // the selected tab, its title, or its editor model.
+        let firstTabID = app.tabs[0].id
+        let secondTabID = app.tabs[1].id
+        app.moveTab(from: 0, to: 1)
+        checkEqual(app.tabs[0].id, secondTabID, "moving a tab right reorders the strip")
+        checkEqual(app.tabs[1].id, firstTabID, "the other tab shifts left")
+        checkEqual(app.selectedTabID, firstTabID, "reordering keeps the selected tab")
+        checkEqual(app.windowTitle, "MDacViewer — first.md",
+                   "reordering keeps the title with the selected tab")
+        checkEqual(string("window.mdac.getActiveTabId()"), firstID,
+                   "reordering keeps the active editor model")
+        app.moveTab(from: 1, to: 0)
+        checkEqual(app.tabs[0].id, firstTabID, "moving the tab back restores the order")
+        checkEqual(app.tabs[1].id, secondTabID, "the second tab is back in place")
+
         app.markDirty()
         checkEqual(app.windowTitle, "MDacViewer — first.md *",
                    "an edit marks only the selected tab dirty")

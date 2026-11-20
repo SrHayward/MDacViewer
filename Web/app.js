@@ -394,6 +394,36 @@
     });
   }
 
+  /* ------------------------------ preview copy ------------------------------ */
+
+  // Copying rendered Markdown must produce plain text only. WebKit's default
+  // copy writes text/html alongside the text, and rich-text destinations
+  // (Claude, Notes, Word…) then keep the preview's code-block background — the
+  // grey "box" around the pasted words. Writing only text/plain keeps the
+  // words and drops every bit of preview styling.
+  function selectionIsInPreview(selection) {
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return false;
+    }
+    var node = selection.getRangeAt(0).commonAncestorContainer;
+    if (node.nodeType !== Node.ELEMENT_NODE) { node = node.parentNode; }
+    return !!node && outputEl.contains(node);
+  }
+
+  function initPreviewCopy() {
+    document.addEventListener('copy', function (event) {
+      var selection = window.getSelection();
+      if (!selectionIsInPreview(selection)) { return; }
+
+      var text = selection.toString();
+      var clipboard = event.clipboardData;
+      if (!text || !clipboard) { return; }
+
+      event.preventDefault();
+      clipboard.setData('text/plain', text);
+    });
+  }
+
   /* ------------------------------ sample content ------------------------------ */
 
   function loadSample(callback) {
@@ -446,6 +476,7 @@
     });
 
     initDivider();
+    initPreviewCopy();
     scheduleRender();
     refreshPreviewMetrics();
 
