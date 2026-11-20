@@ -38,6 +38,14 @@ struct DocumentTabBar: View {
                     .frame(height: 1)
             }
         }
+        .overlay(alignment: .top) {
+            // A hairline between the window toolbar and the strip. Without it
+            // the active tab can merge into the toolbar above (most visibly in
+            // dark mode, where both surfaces are grey), which reads as a bug.
+            Rectangle()
+                .fill(palette.topBorder)
+                .frame(height: 1)
+        }
     }
 
     /// Sublime hides the separators that touch the active tab, so the selected
@@ -146,17 +154,22 @@ struct TabBarPalette {
     let inactiveHover: Color
     let active: Color
     let divider: Color
+    let topBorder: Color
     let bottomBorder: Color
     let inactiveText: Color
     let activeText: Color
 
     init(dark: Bool) {
         if dark {
-            strip = Color(red: 0.10, green: 0.10, blue: 0.10)
-            inactive = Color(red: 0.15, green: 0.15, blue: 0.15)
-            inactiveHover = Color(red: 0.20, green: 0.20, blue: 0.20)
-            active = Color(red: 0.24, green: 0.24, blue: 0.24)
-            divider = Color(red: 0.07, green: 0.07, blue: 0.07)
+            strip = Color(red: 0.09, green: 0.09, blue: 0.09)
+            inactive = Color(red: 0.17, green: 0.17, blue: 0.17)
+            inactiveHover = Color(red: 0.21, green: 0.21, blue: 0.21)
+            // The active tab uses the editor's own background (#1e1e1e), so it
+            // reads as one continuous surface with the content below — exactly
+            // as it does in light mode, where the tab is white.
+            active = Color(red: 0.118, green: 0.118, blue: 0.118)
+            divider = Color(red: 0.06, green: 0.06, blue: 0.06)
+            topBorder = Color(red: 0.04, green: 0.04, blue: 0.04)
             bottomBorder = Color(red: 0.04, green: 0.04, blue: 0.04)
             inactiveText = Color(red: 0.62, green: 0.62, blue: 0.62)
             activeText = Color(red: 0.96, green: 0.96, blue: 0.96)
@@ -166,6 +179,7 @@ struct TabBarPalette {
             inactiveHover = Color(red: 0.92, green: 0.92, blue: 0.92)
             active = .white
             divider = Color(red: 0.73, green: 0.73, blue: 0.73)
+            topBorder = Color(red: 0.72, green: 0.72, blue: 0.72)
             bottomBorder = Color(red: 0.69, green: 0.69, blue: 0.69)
             inactiveText = Color(red: 0.36, green: 0.36, blue: 0.36)
             activeText = Color(red: 0.09, green: 0.09, blue: 0.09)
