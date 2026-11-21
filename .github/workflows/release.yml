@@ -16,7 +16,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    # Build against a current macOS SDK: apps linked with older SDKs get the
+    # legacy toolbar rendering (no grouped Liquid Glass containers) on macOS 26+.
+    runs-on: macos-26
     permissions:
       contents: write
     steps:
