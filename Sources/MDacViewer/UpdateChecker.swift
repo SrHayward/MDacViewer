@@ -28,6 +28,8 @@ final class UpdateChecker: ObservableObject {
 
     private static let latestVersionKey = "updates.latestVersion"
     private static let lastCheckedKey = "updates.lastChecked"
+    /// Version the user has already acknowledged in the in-app notice.
+    private static let announcedVersionKey = "updates.announcedVersion"
     /// Test hook: overrides the API feed (see Scripts/test-update-check.sh).
     private static let feedURLOverrideKey = "updates.feedURL"
 
@@ -40,6 +42,9 @@ final class UpdateChecker: ObservableObject {
     @Published private(set) var updateAvailable = false
     /// Tag name of the latest known release, e.g. "1.0.1".
     @Published private(set) var latestVersion: String?
+    /// Version to announce in the main window's update card, or nil when
+    /// there is nothing new (or the user already acknowledged this version).
+    @Published private(set) var pendingAnnouncementVersion: String?
     @Published private(set) var isChecking = false
     /// Timestamp of the last successful check (persisted).
     @Published private(set) var lastChecked: Date?
@@ -57,6 +62,10 @@ final class UpdateChecker: ObservableObject {
         if let tag = defaults.string(forKey: Self.latestVersionKey) {
             latestVersion = tag
             updateAvailable = Self.isNewer(tag, than: currentVersion)
+            if updateAvailable,
+               defaults.string(forKey: Self.announcedVersionKey) != tag {
+                pendingAnnouncementVersion = tag
+            }
         }
         let checked = defaults.double(forKey: Self.lastCheckedKey)
         if checked > 0 { lastChecked = Date(timeIntervalSince1970: checked) }
@@ -114,12 +123,38 @@ final class UpdateChecker: ObservableObject {
         if let tag {
             defaults.set(tag, forKey: Self.latestVersionKey)
             latestVersion = tag
-            updateAvailable = Self.isNewer(tag, than: runningVersion)
+            let newer = Self.isNewer(tag, than: runningVersion)
+            updateAvailable = newer
+
+            if newer {
+                if defaults.string(forKey: Self.announcedVersionKey) != tag {
+                    pendingAnnouncementVersion = tag
+                }
+            } else {
+                pendingAnnouncementVersion = nil
+            }
         }
     }
 
     func openReleasesPage() {
         NSWorkspace.shared.open(Self.releasesPageURL)
+    }
+
+    // MARK: - In-app notice
+
+    /// Hides the update card and remembers this version, so it is not shown
+    /// again until an even newer release appears.
+    func dismissAnnouncement() {
+        guard let version = pendingAnnouncementVersion else { return }
+        defaults.set(version, forKey: Self.announcedVersionKey)
+        pendingAnnouncementVersion = nil
+    }
+
+    /// The card's Download action: open the Releases page and stop announcing
+    /// this version (the toolbar icon remains until the app is updated).
+    func downloadAnnouncedUpdate() {
+        dismissAnnouncement()
+        openReleasesPage()
     }
 
     // MARK: - Networking
