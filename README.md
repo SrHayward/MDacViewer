@@ -31,7 +31,7 @@ Type or paste Markdown on the left; watch it render on the right — tables, cod
 - **GitHub-flavoured Markdown** — tables, strikethrough, nested lists, blockquotes and more
 - **Mermaid diagrams** — <code>```mermaid</code> blocks render as live diagrams
 - **Open from Finder** — double-click a `.md` file (or drag it onto the app) to open it
-- **Version & update check** — the About window shows the current version, and a quiet once-a-day check shows a toolbar icon when a newer release exists (no auto-download, no auto-install)
+- **Version & update check** — the About window shows the current version, and a quiet once-a-day check shows a toolbar icon plus a small in-app notice when a newer release exists (no auto-download, no auto-install)
 - **Offline & private** — no analytics, no telemetry; your text never leaves your Mac. The only automatic request is the once-a-day update check (see [Privacy](#privacy)).
 - Native Mac app built with SwiftUI — small (~18 MB), fast, native menus and shortcuts
 
@@ -77,7 +77,7 @@ After that it launches like any other app.
 
 MDacViewer is offline-first. It bundles everything it needs (see credits below) — no fonts, no analytics, no telemetry, and your text never leaves your Mac.
 
-There is exactly one automatic network request: about once a day the app asks GitHub's public API (`api.github.com`) for the newest MDacViewer release, so it can show a subtle “update available” icon in the toolbar. The request carries nothing about you — just the app's name and version — and the result is stored locally. The About window also has a **Check for Updates** button if you want to check on demand. Nothing is ever downloaded or installed automatically.
+There is exactly one automatic network request: about once a day the app asks GitHub's public API (`api.github.com`) for the newest MDacViewer release, so it can show a subtle “update available” icon in the toolbar and a small in-app notice. The request carries nothing about you — just the app's name and version — and the result is stored locally. The About window also has a **Check for Updates** button if you want to check on demand. Nothing is ever downloaded or installed automatically.
 
 Everything else that opens a network connection is when **you** click a link in your Markdown (it opens in your default browser) or one of the GitHub buttons.
 

@@ -10,6 +10,16 @@ struct MainWindow: View {
         VStack(spacing: 0) {
             DocumentTabBar(app: app)
             EditorWebView()
+                .overlay(alignment: .topTrailing) {
+                    if let version = updates.pendingAnnouncementVersion {
+                        UpdateAvailableCard(version: version, updates: updates)
+                            .padding(.top, 16)
+                            .padding(.trailing, 16)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                }
+                .animation(.easeInOut(duration: 0.25),
+                           value: updates.pendingAnnouncementVersion)
         }
             .frame(minWidth: 880, minHeight: 540)
             .background(WindowFrameSaver())
@@ -39,25 +49,30 @@ struct MainWindow: View {
 
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 24) {
-                        HStack(spacing: 8) {
-                            Text("Sync scroll")
-                            Toggle("Sync scroll", isOn: $app.syncScroll)
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
+                        Toggle(isOn: $app.syncScroll) {
+                            Label("Sync scroll",
+                                  systemImage: app.syncScroll
+                                      ? "arrow.up.and.down.circle.fill"
+                                      : "arrow.up.and.down.circle")
                         }
+                        .toggleStyle(.button)
+                        .labelStyle(.iconOnly)
+                        .controlSize(.regular)
                         .disabled(app.viewMode != .split)
-                        .opacity(app.viewMode == .split ? 1 : 0.45)
-                        .help("Keep the editor and preview scrolled together (Split view only)")
+                        .help(app.viewMode == .split
+                              ? "Sync scroll: \(app.syncScroll ? "On" : "Off")"
+                              : "Sync scroll (available in Split view)")
+                        .accessibilityLabel("Sync scroll")
 
-                        HStack(spacing: 8) {
-                            Text("Dark mode")
-                            Toggle("Dark mode", isOn: $app.darkMode)
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.small)
+                        Toggle(isOn: $app.darkMode) {
+                            Label("Dark mode",
+                                  systemImage: app.darkMode ? "moon.fill" : "moon")
                         }
-                        .help("Switch between light and dark appearance")
+                        .toggleStyle(.button)
+                        .labelStyle(.iconOnly)
+                        .controlSize(.regular)
+                        .help("Dark mode: \(app.darkMode ? "On" : "Off")")
+                        .accessibilityLabel("Dark mode")
 
                         Button { showingViewMode.toggle() } label: {
                             Image(systemName: "rectangle.split.2x1")
@@ -116,6 +131,62 @@ struct MainWindow: View {
         return NSImage(systemSymbolName: "arrow.up.right", accessibilityDescription: "GitHub")
             ?? NSImage()
     }()
+}
+
+/// Floating notice shown over the editor when a newer release is detected.
+/// Dismissal is remembered per version by ``UpdateChecker``.
+private struct UpdateAvailableCard: View {
+    let version: String
+    @ObservedObject var updates: UpdateChecker
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Update available")
+                    .font(.callout.weight(.semibold))
+                Text("Version \(version) is available.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 12)
+
+            Button("Download") {
+                updates.downloadAnnouncedUpdate()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+            .accessibilityLabel("Download version \(version)")
+
+            Button {
+                updates.dismissAnnouncement()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .frame(width: 18, height: 18)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+            .help("Dismiss")
+            .accessibilityLabel("Dismiss update notification")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: 380, alignment: .leading)
+        .background(.regularMaterial,
+                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.10), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
+    }
 }
 
 /// Toolbar popover for adjusting only the rendered preview's text size.

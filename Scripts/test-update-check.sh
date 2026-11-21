@@ -9,8 +9,10 @@
 #   5. verifies the check ran and the result was persisted.
 #
 # Expected: an update icon appears in the toolbar (between the Dark mode
-# toggle and the GitHub button). Hover it for the "Update available" tooltip;
-# clicking it opens the Releases page in the browser.
+# button and the GitHub button) and a floating "Update available" card appears
+# over the editor. Hover the icon for its tooltip; clicking it, or the card's
+# Download button, opens the Releases page in the browser. Dismissing the card
+# persists updates.announcedVersion, so it is not shown again for that version.
 #
 # Notes: quits a running MDacViewer first, and removes the update-state keys
 # from com.srhayward.mdacviewer defaults when it exits.
@@ -30,6 +32,7 @@ cleanup() {
   defaults delete "$BUNDLE_ID" updates.feedURL 2>/dev/null || true
   defaults delete "$BUNDLE_ID" updates.latestVersion 2>/dev/null || true
   defaults delete "$BUNDLE_ID" updates.lastChecked 2>/dev/null || true
+  defaults delete "$BUNDLE_ID" updates.announcedVersion 2>/dev/null || true
   rm -rf "$FEED_DIR"
 }
 trap cleanup EXIT
@@ -49,6 +52,7 @@ sleep 1
 defaults write "$BUNDLE_ID" updates.feedURL "http://127.0.0.1:$PORT/release.json"
 defaults delete "$BUNDLE_ID" updates.latestVersion 2>/dev/null || true
 defaults delete "$BUNDLE_ID" updates.lastChecked 2>/dev/null || true
+defaults delete "$BUNDLE_ID" updates.announcedVersion 2>/dev/null || true
 
 echo "→ Launching the app (the automatic check runs ~5 s after launch)…"
 open "$APP"
@@ -70,7 +74,8 @@ echo
 if [ "$LATEST" = "99.0.0" ]; then
   echo "✔ Check ran and was persisted."
   echo "  An update icon should be visible in the toolbar now (between the"
-  echo "  Dark mode toggle and the GitHub button). Hover → \"Update available\"."
+  echo "  Dark mode button and the GitHub button), and a floating update card"
+  echo "  should be showing over the editor. Hover the icon → \"Update available\"."
 else
   echo "✘ Expected updates.latestVersion = 99.0.0."
   echo "  Is the app running? Did macOS prompt about python3 accepting connections?"

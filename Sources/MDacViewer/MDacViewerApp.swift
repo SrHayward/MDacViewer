@@ -57,6 +57,10 @@ struct MDacViewerApp: App {
                 Toggle(ViewMode.previewOnly.menuTitle, isOn: viewModeBinding(.previewOnly))
                     .keyboardShortcut("3", modifiers: .command)
                 Divider()
+                Toggle("Sync Scrolling", isOn: $app.syncScroll)
+                    .disabled(app.viewMode != .split)
+                Toggle("Dark Mode", isOn: $app.darkMode)
+                Divider()
                 Button("Increase Preview Text Size") { app.increasePreviewFontSize() }
                     .keyboardShortcut("+", modifiers: .command)
                 Button("Decrease Preview Text Size") { app.decreasePreviewFontSize() }
